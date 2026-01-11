@@ -1,0 +1,59 @@
+# Minimal UDS Example
+# This is the absolute minimum valid UDS dashboard document.
+# It demonstrates all required properties per the UDS v0.1.0 specification.
+
+# REQUIRED: UDS version (semver format)
+uds: "0.1.0"
+
+# REQUIRED: Dashboard definition
+dashboard:
+
+  # REQUIRED: Dashboard title
+  title: "Minimal Dashboard"
+
+  # REQUIRED: Intent statement explaining the dashboard's purpose
+  # Must describe what decisions this dashboard enables
+  intent: "Monitor system health and identify operational issues"
+
+  # REQUIRED: Persona configuration
+  # Defines who uses this dashboard and how much they can customize it
+  persona:
+    type: operator  # REQUIRED: One of: executive, manager, analyst, operator, external
+    customization_level: minimal  # REQUIRED: One of: none, minimal, moderate, full
+
+  # REQUIRED: At least one semantic source
+  # Semantic sources provide the metrics and dimensions for the dashboard
+  semantic_sources:
+    - id: metrics  # REQUIRED: Unique identifier for this source
+      type: cube  # REQUIRED: Type of semantic layer (cube, dbt, looker, generic, custom)
+      endpoint: "https://api.example.com/cube"  # REQUIRED: API endpoint URL
+      auth:  # REQUIRED: Authentication configuration
+        type: none  # Using 'none' for this minimal example
+
+  # REQUIRED: Layout configuration
+  # Defines how panels are arranged on the dashboard
+  layout:
+    type: grid  # REQUIRED: Layout type (grid or freeform)
+    columns: 12  # REQUIRED for grid: Number of columns
+    row_height: 60  # REQUIRED for grid: Height of each row in pixels
+
+  # REQUIRED: At least one panel
+  # Panels are the visual components that display data
+  panels:
+    - id: status  # REQUIRED: Unique identifier for this panel
+      type: kpi  # REQUIRED: Panel type (kpi, timeseries, table, etc.)
+      title: "System Status"  # REQUIRED: Panel title displayed to users
+
+      # REQUIRED: Position within the layout
+      position:
+        row: 0  # REQUIRED: Starting row (0-indexed)
+        column: 0  # REQUIRED: Starting column (0-indexed)
+        width: 4  # REQUIRED: Width in grid columns
+        height: 2  # REQUIRED: Height in grid rows
+
+      # REQUIRED: Data configuration
+      # Defines what data the panel displays and where it comes from
+      data:
+        source: metrics  # REQUIRED: ID of the semantic source (must match a semantic_sources[].id)
+        metrics:  # REQUIRED: At least one metric reference
+          - ref: "system.uptime_percentage"  # REQUIRED: Semantic reference to a metric
