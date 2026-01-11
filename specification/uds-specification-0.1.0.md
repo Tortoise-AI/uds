@@ -64,11 +64,11 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 30. [Versioning](#30-versioning)
 31. [IANA Considerations](#31-iana-considerations)
 32. [References](#32-references)
-33. [Appendix A: Complete JSON Schema](#appendix-a-complete-json-schema)
-34. [Appendix B: Examples](#appendix-b-examples)
-35. [Appendix C: Migration Guides](#appendix-c-migration-guides)
-36. [Appendix D: Glossary](#appendix-d-glossary)
-37. [Appendix E: Conformance Level Enumeration](#appendix-e-conformance-level-enumeration)
+- [Appendix A: Complete JSON Schema](#appendix-a-complete-json-schema)
+- [Appendix B: Examples](#appendix-b-examples)
+- [Appendix C: Migration Guides](#appendix-c-migration-guides)
+- [Appendix D: Glossary](#appendix-d-glossary)
+- [Appendix E: Conformance Level Enumeration](#appendix-e-conformance-level-enumeration)
 
 ---
 
@@ -6593,7 +6593,7 @@ This section defines which properties are required at each conformance level.
 
 ---
 
-## 3.46 Conformance Test Counts
+### E.46 Conformance Test Counts
 
 Based on the enumeration above:
 
