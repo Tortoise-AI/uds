@@ -1,0 +1,215 @@
+# =============================================================================
+# UDS Example: Executive Sales Dashboard (Advanced)
+# =============================================================================
+# Purpose: Real-world executive sales dashboard with multiple sources, theming, i18n
+# Demonstrates: Multi-source, sections, theme, i18n, derived metrics
+# Spec sections: 6, 8, 11, 17, 18
+# =============================================================================
+
+uds: "0.1.0"
+
+metadata:
+  id: "sales-exec-q4-2026"
+  name: "sales-executive-q4"
+  version: "1.2.0"
+  created_at: "2026-01-01T00:00:00Z"
+  modified_at: "2026-01-11T10:30:00Z"
+  authors:
+    - name: "Data Team"
+      email: "data@example.com"
+  tags: ["sales", "executive", "quarterly"]
+
+dashboard:
+  title: "Q4 Sales Executive Summary"
+  description: "Comprehensive Q4 sales performance with targets and regional breakdown"
+  intent: "Monitor Q4 sales performance against targets and identify regional trends for strategic planning"
+
+  decisions:
+    - "Adjust Q4 forecast based on current trajectory"
+    - "Reallocate sales resources by region"
+    - "Evaluate pricing strategy effectiveness"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  # Multiple semantic sources
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+    - id: targets
+      type: cube
+      endpoint: "https://targets.example.com/api/v1"
+      authentication:
+        type: bearer
+        token_env: "TARGETS_API_TOKEN"
+
+  # Default time context
+  time_context:
+    default_range:
+      type: absolute
+      start: "2026-10-01"
+      end: "2026-12-31"
+    timezone: "America/New_York"
+    fiscal_year_start: "01-01"
+
+  # Derived metrics combining both sources
+  derived_metrics:
+    - id: quota_attainment
+      name: "Quota Attainment"
+      description: "Actual revenue as percentage of target"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "sales.total_revenue"
+            source: sales
+          - metric: "targets.revenue_target"
+            source: targets
+      format:
+        style: percent
+        precision: 1
+
+    - id: revenue_gap
+      name: "Revenue Gap"
+      description: "Difference between target and actual"
+      expression:
+        type: arithmetic
+        operator: subtract
+        operands:
+          - metric: "targets.revenue_target"
+            source: targets
+          - metric: "sales.total_revenue"
+            source: sales
+      format:
+        style: currency
+        currency: USD
+        notation: compact
+
+  # Sections layout
+  layout:
+    type: sections
+    sections:
+      - id: kpis
+        title: "Key Performance Indicators"
+        collapsible: false
+        layout: { type: grid, columns: 12, row_height: 100 }
+      - id: regional
+        title: "Regional Performance"
+        collapsible: true
+        collapsed: false
+        layout: { type: grid, columns: 12, row_height: 70 }
+
+  panels:
+    # KPI Section
+    - id: revenue_kpi
+      type: kpi
+      title: "Q4 Revenue"
+      section: kpis
+      position: { row: 0, column: 0, width: 3, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_year }
+        sparkline: { enabled: true }
+
+    - id: quota_kpi
+      type: kpi
+      title: "Quota Attainment"
+      section: kpis
+      position: { row: 0, column: 3, width: 3, height: 2 }
+      data:
+        derived_metric: quota_attainment
+      options:
+        format: { style: percent, precision: 0 }
+        target: { value: 1.0 }
+
+    - id: gap_kpi
+      type: kpi
+      title: "Revenue Gap"
+      section: kpis
+      position: { row: 0, column: 6, width: 3, height: 2 }
+      data:
+        derived_metric: revenue_gap
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    - id: deals_kpi
+      type: kpi
+      title: "Closed Deals"
+      section: kpis
+      position: { row: 0, column: 9, width: 3, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.closed_deals_count" }]
+      options:
+        format: { style: number, precision: 0 }
+
+    # Regional Section
+    - id: regional_bar
+      type: bar
+      title: "Revenue by Region"
+      section: regional
+      position: { row: 0, column: 0, width: 7, height: 4 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ ref: "sales.region" }]
+      options:
+        orientation: horizontal
+        sort_by: value
+        sort_order: desc
+
+    - id: top_accounts
+      type: table
+      title: "Top 10 Accounts"
+      section: regional
+      position: { row: 0, column: 7, width: 5, height: 4 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+        dimensions: [{ ref: "sales.account_name" }]
+      options:
+        pagination: { enabled: false }
+
+  # Theme configuration
+  theme:
+    mode: light
+    primary_colour: "#1976D2"
+    secondary_colour: "#424242"
+    accent_colour: "#4CAF50"
+    font_family: "Inter, system-ui, sans-serif"
+
+  # Internationalisation
+  i18n:
+    default_locale: "en-US"
+    supported_locales: ["en-US", "en-GB", "es-ES"]
+    number_format:
+      locale: "en-US"
+    date_format:
+      locale: "en-US"
+      format: "MMM D, YYYY"
+
+  # Error handling
+  error_handling:
+    on_panel_error:
+      action: show_placeholder
+      message: "Data temporarily unavailable"
+    on_source_error:
+      action: show_error
+      allow_partial: true
+
+  accessibility:
+    alt_text: "Q4 Sales Executive Summary showing revenue performance, quota attainment, and regional breakdown"

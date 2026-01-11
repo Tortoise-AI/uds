@@ -1,0 +1,147 @@
+# =============================================================================
+# UDS Example: Basic Data Table
+# =============================================================================
+# Purpose: Simple data table with multiple metrics and dimensions
+# Demonstrates: Table type, sorting, pagination, column formatting
+# Spec sections: 14.5
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Performance Table"
+  intent: "Display detailed sales performance by account for operational review"
+
+  persona:
+    type: operator
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: sales_table
+      type: table
+      title: "Sales by Account"
+      description: "Detailed performance metrics for all customer accounts"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+          - ref: "sales.average_order_value"
+          - ref: "sales.quota_attainment"
+        dimensions:
+          - ref: "sales.account_name"
+          - ref: "sales.region"
+          - ref: "sales.account_manager"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Column configuration
+        columns:
+          - field: "sales.account_name"
+            label: "Account"
+            width: 200
+            align: left
+            sortable: true
+            pinned: left
+
+          - field: "sales.region"
+            label: "Region"
+            width: 120
+            align: left
+            sortable: true
+
+          - field: "sales.account_manager"
+            label: "Manager"
+            width: 150
+            align: left
+            sortable: true
+
+          - field: "sales.total_revenue"
+            label: "Revenue"
+            width: 120
+            align: right
+            sortable: true
+            format:
+              style: currency
+              currency: USD
+              precision: 0
+              notation: compact
+
+          - field: "sales.total_orders"
+            label: "Orders"
+            width: 100
+            align: right
+            sortable: true
+            format:
+              style: number
+              precision: 0
+
+          - field: "sales.average_order_value"
+            label: "Avg Order"
+            width: 120
+            align: right
+            sortable: true
+            format:
+              style: currency
+              currency: USD
+              precision: 0
+
+          - field: "sales.quota_attainment"
+            label: "Quota %"
+            width: 100
+            align: right
+            sortable: true
+            format:
+              style: percent
+              precision: 0
+
+        # Table behaviour
+        sorting:
+          initial:
+            field: "sales.total_revenue"
+            order: desc
+          allow_multi: false
+
+        pagination:
+          enabled: true
+          page_size: 20
+          show_size_options: true
+          size_options: [10, 20, 50, 100]
+
+        # Search
+        search:
+          enabled: true
+          fields: ["sales.account_name", "sales.account_manager"]
+          placeholder: "Search accounts..."
+
+        # Row styling
+        row_height: compact  # compact | comfortable | spacious
+        zebra_striping: true
+
+      accessibility:
+        alt_text: "Data table showing sales performance metrics for customer accounts, sorted by revenue"

@@ -1,0 +1,112 @@
+# =============================================================================
+# UDS Example: Executive Summary Dashboard
+# =============================================================================
+# Purpose: High-level summary optimized for executive persona
+# Demonstrates: Executive persona characteristics, minimal interaction, large KPIs
+# Spec sections: 7
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Executive Summary"
+  intent: "Provide high-level business performance snapshot for quick executive review"
+
+  # Executive persona characteristics
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+      primary_device: desktop
+      update_frequency: periodic
+
+  semantic_sources:
+    - id: metrics
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 100  # Taller rows for executive view
+
+  panels:
+    # Large prominent KPIs - executive needs to see key numbers at a glance
+    - id: revenue
+      type: kpi
+      title: "Revenue"
+      position: { row: 0, column: 0, width: 4, height: 2 }
+      data:
+        source: metrics
+        metrics: [{ ref: "metrics.total_revenue" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_period, show_percent: true }
+        sparkline: { enabled: true, periods: 4 }
+        layout: { value_size: xlarge }
+
+    - id: profit
+      type: kpi
+      title: "Profit"
+      position: { row: 0, column: 4, width: 4, height: 2 }
+      data:
+        source: metrics
+        metrics: [{ ref: "metrics.net_profit" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_period, show_percent: true }
+        layout: { value_size: xlarge }
+
+    - id: growth
+      type: kpi
+      title: "Growth Rate"
+      position: { row: 0, column: 8, width: 4, height: 2 }
+      data:
+        source: metrics
+        metrics: [{ ref: "metrics.growth_rate" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: percent, precision: 1 }
+        layout: { value_size: xlarge }
+        thresholds:
+          mode: absolute
+          values:
+            - max: 0.05
+              status: negative
+            - max: 0.1
+              status: neutral
+            - min: 0.1
+              status: positive
+
+    # Single simple trend - no complex charts for executives
+    - id: quarterly_trend
+      type: trend
+      title: "Quarterly Performance"
+      position: { row: 2, column: 0, width: 12, height: 3 }
+      data:
+        source: metrics
+        metrics: [{ ref: "metrics.total_revenue" }]
+        time_range: { type: relative, value: "last_8_quarters" }
+        time_grain: quarter
+      options:
+        style: area
+        y_axis: { format: { style: currency, currency: USD, notation: compact } }
+        legend: { show: false }
+
+  # No filters exposed - executives don't want to configure
+  filters: []
+  variables: []
+
+  # No refresh needed - executives check periodically
+  refresh:
+    enabled: false
+
+  accessibility:
+    alt_text: "Executive summary showing Revenue $12.5M up 8%, Profit $2.8M up 5%, Growth Rate 12%, with quarterly trend"

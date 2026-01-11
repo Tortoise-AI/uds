@@ -1,0 +1,186 @@
+# =============================================================================
+# UDS Example: External Client Dashboard
+# =============================================================================
+# Purpose: Client-facing dashboard optimized for external persona
+# Demonstrates: External persona, curated content, limited data, branding
+# Spec sections: 7, 17, 21
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Account Performance"
+  intent: "Provide clients with transparent view of their account performance and engagement metrics"
+
+  persona:
+    type: external
+    characteristics:
+      attention_span: moderate
+      data_literacy: low
+      interaction_preference: minimal
+      primary_device: any
+      update_frequency: periodic
+
+  semantic_sources:
+    - id: client_metrics
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CLIENT_API_TOKEN"
+
+  layout:
+    type: sections
+    sections:
+      - id: overview
+        title: "Your Performance"
+        collapsible: false
+        layout: { type: grid, columns: 12, row_height: 80 }
+      - id: usage
+        title: "Usage & Engagement"
+        collapsible: true
+        collapsed: false
+        layout: { type: grid, columns: 12, row_height: 70 }
+
+  panels:
+    # Overview section - positive framing for clients
+    - id: total_value
+      type: kpi
+      title: "Total Value Delivered"
+      section: overview
+      position: { row: 0, column: 0, width: 4, height: 2 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.total_value_delivered" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_period }
+
+    - id: cost_savings
+      type: kpi
+      title: "Cost Savings"
+      section: overview
+      position: { row: 0, column: 4, width: 4, height: 2 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.cost_savings" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_period }
+
+    - id: satisfaction
+      type: gauge
+      title: "Service Rating"
+      section: overview
+      position: { row: 0, column: 8, width: 4, height: 2 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.satisfaction_score" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        min: 0
+        max: 5
+        zones:
+          - { min: 0, max: 3, colour: "#FFC107" }
+          - { min: 3, max: 5, colour: "#4CAF50" }
+        style: circle
+
+    # Usage section
+    - id: monthly_usage
+      type: trend
+      title: "Monthly Usage Trend"
+      section: usage
+      position: { row: 0, column: 0, width: 12, height: 4 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.usage_volume" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "last_12_months" }
+        time_grain: month
+      options:
+        style: area
+        y_axis: { label: "Usage" }
+        markers: { show: true }
+
+    - id: feature_usage
+      type: pie
+      title: "Feature Usage Breakdown"
+      section: usage
+      position: { row: 4, column: 0, width: 6, height: 4 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.feature_usage_count" }]
+        dimensions: [{ ref: "client.feature_name" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        style: donut
+        limit: 5
+
+    - id: engagement_score
+      type: kpi
+      title: "Engagement Score"
+      section: usage
+      position: { row: 4, column: 6, width: 6, height: 4 }
+      data:
+        source: client_metrics
+        metrics: [{ ref: "client.engagement_score" }]
+        filters:
+          - dimension: "client.account_id"
+            operator: eq
+            value: "{{ user.account_id }}"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: number, precision: 0, suffix: " / 100" }
+        comparison: { enabled: true, type: previous_period }
+
+  # Custom theme for client-facing dashboard
+  theme:
+    mode: light
+    primary_colour: "#1976D2"
+    secondary_colour: "#F5F5F5"
+    accent_colour: "#4CAF50"
+    font_family: "Inter, sans-serif"
+    logo: "https://example.com/logo.png"
+
+  # Embedding configuration for client portal
+  embedding:
+    enabled: true
+    allow_domains: ["client-portal.example.com"]
+    hide_chrome: true  # Hide dashboard title bar
+    allow_export: false  # Clients can't export data
+    allow_filter_modification: false
+
+  # No filters exposed to external users
+  filters: []
+  variables: []
+
+  # Row-level security enforced at source
+  access:
+    row_level_security:
+      enabled: true
+      dimension: "client.account_id"
+      user_attribute: "account_id"
+
+  accessibility:
+    alt_text: "Client performance dashboard showing value delivered, cost savings, service rating, and usage metrics"

@@ -1,0 +1,85 @@
+# =============================================================================
+# UDS Example: Basic Text Panel
+# =============================================================================
+# Purpose: Text panel with markdown and metric interpolation
+# Demonstrates: Text type, markdown content, dynamic values, conditional text
+# Spec sections: 14.12
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Executive Summary Text"
+  intent: "Provide narrative context for dashboard metrics with dynamic value interpolation"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: summary_text
+      type: text
+      title: "Q4 Performance Summary"
+      description: "Executive summary with embedded performance metrics"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 3
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.revenue_growth_rate"
+          - ref: "sales.quota_attainment"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Markdown content with metric interpolation
+        content: |
+          ## Performance Highlights
+
+          Q4 revenue reached **{{sales.total_revenue | currency}}**, representing a
+          **{{sales.revenue_growth_rate | percent:1}}** increase over Q3.
+
+          Current quota attainment stands at **{{sales.quota_attainment | percent:0}}**.
+
+          {{#if sales.quota_attainment >= 1.0}}
+          The team has successfully exceeded the quarterly target. 🎯
+          {{else if sales.quota_attainment >= 0.9}}
+          We are on track to meet our quarterly target.
+          {{else}}
+          Immediate action is required to close the performance gap.
+          {{/if}}
+
+        # Styling
+        text_align: left
+        font_size: medium
+        padding: medium
+
+        # Conditional sections
+        conditional_blocks:
+          enabled: true
+
+      accessibility:
+        alt_text: "Executive summary text showing Q4 revenue, growth rate, and quota attainment with conditional messaging"

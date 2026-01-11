@@ -1,0 +1,102 @@
+# =============================================================================
+# UDS Example: Basic Waterfall Chart
+# =============================================================================
+# Purpose: Waterfall showing cumulative changes from start to end value
+# Demonstrates: Waterfall type, positive/negative changes, subtotals
+# Spec sections: Extended types
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue Waterfall"
+  intent: "Understand contributors to revenue change from Q3 to Q4"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: revenue_waterfall
+      type: waterfall
+      title: "Q3 to Q4 Revenue Bridge"
+      description: "Waterfall showing factors contributing to quarterly revenue change"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.q3_revenue"
+          - ref: "sales.new_customers_revenue"
+          - ref: "sales.upsell_revenue"
+          - ref: "sales.churn_revenue"
+          - ref: "sales.price_change_revenue"
+          - ref: "sales.q4_revenue"
+
+      options:
+        # Category configuration
+        categories:
+          - label: "Q3 Revenue"
+            metric: "sales.q3_revenue"
+            type: total
+          - label: "New Customers"
+            metric: "sales.new_customers_revenue"
+            type: increase
+          - label: "Upsells"
+            metric: "sales.upsell_revenue"
+            type: increase
+          - label: "Churn"
+            metric: "sales.churn_revenue"
+            type: decrease
+          - label: "Price Changes"
+            metric: "sales.price_change_revenue"
+            type: increase
+          - label: "Q4 Revenue"
+            metric: "sales.q4_revenue"
+            type: total
+
+        # Colour configuration
+        colours:
+          increase: "#4CAF50"
+          decrease: "#F44336"
+          total: "#2196F3"
+
+        # Labels
+        show_values: true
+        show_connectors: true
+        value_format:
+          style: currency
+          currency: USD
+          notation: compact
+
+        # Axes
+        y_axis:
+          label: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+      accessibility:
+        alt_text: "Waterfall chart showing Q3 revenue of $3.5M increasing to Q4 revenue of $4.2M through new customers, upsells, and price changes, offset by churn"

@@ -1,0 +1,152 @@
+# =============================================================================
+# UDS Example: Product Roadmap
+# =============================================================================
+# Purpose: Product roadmap with phases, milestones, dependencies, and swim lanes
+# Demonstrates: Roadmap type, hybrid bindings, dependencies, critical path
+# Spec sections: 14.18
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Product Roadmap 2026"
+  intent: "Visualise product development timeline with phases, milestones, and team assignments"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: extended
+      data_literacy: medium
+      interaction_preference: full
+
+  semantic_sources:
+    - id: product
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: product_roadmap
+      type: roadmap
+      title: "2026 Product Roadmap"
+      description: "Product development timeline with phases, features, and milestones"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 10
+
+      data:
+        source: product
+        metrics:
+          - ref: "product.progress"
+        dimensions:
+          - ref: "product.item_id"
+          - ref: "product.item_title"
+          - ref: "product.item_type"
+          - ref: "product.start_date"
+          - ref: "product.end_date"
+          - ref: "product.status"
+          - ref: "product.parent_id"
+          - ref: "product.team"
+          - ref: "product.dependencies"
+          - ref: "product.owner"
+          - ref: "product.colour"
+        filters:
+          - dimension: "product.year"
+            operator: eq
+            value: "2026"
+          - dimension: "product.roadmap_id"
+            operator: eq
+            value: "main"
+
+      options:
+        # Hybrid bindings
+        bindings:
+          item_id: "product.item_id"
+          item_title: "product.item_title"
+          item_type: "product.item_type"
+          start_date: "product.start_date"
+          end_date: "product.end_date"
+          progress: "product.progress"
+          status: "product.status"
+          parent_id: "product.parent_id"
+          lane: "product.team"
+          dependencies: "product.dependencies"
+          owner: "product.owner"
+          color: "product.colour"
+
+        # Timeline configuration
+        timeline:
+          start: "2026-01-01"
+          end: "2026-12-31"
+          granularity: month
+          show_weekends: false
+          working_days: [1, 2, 3, 4, 5]  # Mon-Fri
+          show_today: true
+
+        # Display options
+        display:
+          layout: swimlane  # Options: gantt, timeline, swimlane, calendar
+          show_progress: true
+          show_dependencies: true
+          show_milestones: true
+          show_labels: true
+          label_position: inside
+          row_height: 40
+          expandable: true  # Phases can expand to show nested tasks
+
+        # Swim lanes by team
+        lanes:
+          enabled: true
+          dimension: "product.team"
+          order:
+            - "Platform"
+            - "Mobile"
+            - "Web"
+            - "Data"
+            - "Design"
+          colours:
+            Platform: "#1976D2"
+            Mobile: "#388E3C"
+            Web: "#F57C00"
+            Data: "#7B1FA2"
+            Design: "#C2185B"
+          show_headers: true
+
+        # Dependencies configuration
+        dependencies:
+          show: true
+          style: arrow  # Options: arrow, line, bezier
+          colour: "#666"
+          highlight_critical: true  # Highlight critical path
+
+        # Today marker
+        today_marker:
+          show: true
+          style: both  # Options: line, highlight, both
+          colour: "#F44336"
+
+        # Zoom controls
+        zoom:
+          enabled: true
+          levels: ["quarter", "month", "week"]
+          initial: "month"
+
+      interactions:
+        - trigger: item_click
+          action: drill_through
+          target: "item-detail"
+        - trigger: dependency_click
+          action: highlight_path
+
+      accessibility:
+        alt_text: "Product roadmap showing development timeline across five teams with phases, features, milestones, and dependencies for 2026"

@@ -1,0 +1,112 @@
+# =============================================================================
+# UDS Example: Basic Bar Chart
+# =============================================================================
+# Purpose: Simple bar chart showing metric by single dimension
+# Demonstrates: Bar type, horizontal orientation, top N with grouping
+# Spec sections: 14.4
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue by Product Category"
+  intent: "Identify top-performing product categories to guide inventory decisions"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: category_revenue
+      type: bar
+      title: "Top 10 Product Categories"
+      description: "Revenue by product category, showing top 10 with others grouped"
+
+      position:
+        row: 0
+        column: 0
+        width: 8
+        height: 5
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.product_category"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Chart orientation
+        orientation: horizontal
+
+        # Data limiting
+        limit: 10
+        group_remaining: true
+        group_label: "Other Categories"
+
+        # Sorting
+        sort_by: value
+        sort_order: desc
+
+        # Bar styling
+        bar_width: 0.7
+        colour_scheme: sequential
+        show_values: true
+        value_position: end
+
+        # Axes
+        x_axis:
+          show: true
+          label: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        y_axis:
+          show: true
+          label: "Category"
+          truncate: 20
+
+        # Grid
+        grid:
+          show_x: true
+          show_y: false
+
+        # Tooltip
+        tooltip:
+          show: true
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+
+      # Interactivity
+      interactions:
+        - trigger: click
+          action: drill_through
+          target: "category-detail"
+          context:
+            preserve_filters: true
+
+      accessibility:
+        alt_text: "Horizontal bar chart showing revenue for top 10 product categories, ranging from $2.5M to $500K"

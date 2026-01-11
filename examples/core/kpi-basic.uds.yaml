@@ -1,0 +1,80 @@
+# =============================================================================
+# UDS Example: Basic KPI Panel
+# =============================================================================
+# Purpose: Single KPI showing revenue with currency formatting
+# Demonstrates: Core KPI type, metric reference, basic formatting
+# Spec sections: 6.1, 10, 14.2
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  # REQUIRED properties
+  title: "Revenue KPI"
+  intent: "Display current total revenue for quick performance monitoring"
+
+  # Persona configuration
+  persona:
+    type: manager
+    characteristics:
+      attention_span: brief
+      data_literacy: medium
+      interaction_preference: minimal
+
+  # Semantic source definition
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  # Simple grid layout
+  layout:
+    type: grid
+    columns: 12
+    row_height: 80
+
+  # Single KPI panel
+  panels:
+    - id: revenue_kpi
+      type: kpi
+      title: "Total Revenue"
+      description: "Sum of all completed orders in the current period"
+
+      # Panel positioning
+      position:
+        row: 0
+        column: 0
+        width: 4
+        height: 2
+
+      # Data binding
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        time_range:
+          type: relative
+          value: "this_month"
+
+      # KPI-specific options
+      options:
+        format:
+          style: currency
+          currency: USD
+          precision: 0
+          notation: compact
+
+        # No comparison in basic example
+        comparison:
+          enabled: false
+
+        # No sparkline in basic example
+        sparkline:
+          enabled: false
+
+      # Accessibility
+      accessibility:
+        alt_text: "Total revenue for current month"

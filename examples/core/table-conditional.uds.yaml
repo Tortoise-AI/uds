@@ -1,0 +1,164 @@
+# =============================================================================
+# UDS Example: Table with Conditional Formatting
+# =============================================================================
+# Purpose: Data table with cell colouring, data bars, icons, totals
+# Demonstrates: Conditional formatting, thresholds, aggregations, column grouping
+# Spec sections: 14.5
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Performance with Alerts"
+  intent: "Quickly identify underperforming accounts requiring immediate attention"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: performance_table
+      type: table
+      title: "Account Performance Dashboard"
+      description: "Sales performance with visual indicators for quota attainment and trend"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 7
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.revenue_growth_rate"
+          - ref: "sales.quota_attainment"
+          - ref: "sales.total_orders"
+        dimensions:
+          - ref: "sales.account_name"
+          - ref: "sales.region"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        columns:
+          - field: "sales.account_name"
+            label: "Account"
+            width: 250
+            align: left
+            pinned: left
+
+          - field: "sales.region"
+            label: "Region"
+            width: 120
+            align: center
+
+          - field: "sales.total_revenue"
+            label: "Revenue"
+            width: 150
+            align: right
+            format:
+              style: currency
+              currency: USD
+              notation: compact
+            # Data bars
+            conditional_formatting:
+              type: data_bar
+              colour: "#4CAF50"
+              show_value: true
+
+          - field: "sales.revenue_growth_rate"
+            label: "Growth"
+            width: 120
+            align: right
+            format:
+              style: percent
+              precision: 1
+              sign_display: always
+            # Colour scale
+            conditional_formatting:
+              type: colour_scale
+              scale:
+                - value: -0.2
+                  colour: "#F44336"
+                - value: 0
+                  colour: "#FFC107"
+                - value: 0.2
+                  colour: "#4CAF50"
+
+          - field: "sales.quota_attainment"
+            label: "Quota"
+            width: 120
+            align: right
+            format:
+              style: percent
+              precision: 0
+            # Icon indicators
+            conditional_formatting:
+              type: icon
+              rules:
+                - min: 1.1
+                  icon: "trending_up"
+                  colour: "#4CAF50"
+                - min: 0.9
+                  max: 1.1
+                  icon: "remove"
+                  colour: "#FFC107"
+                - max: 0.9
+                  icon: "trending_down"
+                  colour: "#F44336"
+
+          - field: "sales.total_orders"
+            label: "Orders"
+            width: 100
+            align: right
+            format:
+              style: number
+              precision: 0
+
+        # Totals row
+        totals:
+          enabled: true
+          position: bottom
+          label: "Total"
+          columns:
+            "sales.total_revenue": sum
+            "sales.total_orders": sum
+            "sales.revenue_growth_rate": average
+            "sales.quota_attainment": average
+
+        # Sorting
+        sorting:
+          initial:
+            field: "sales.quota_attainment"
+            order: asc  # Show worst performers first
+
+        # Pagination
+        pagination:
+          enabled: true
+          page_size: 25
+
+        # Row styling
+        row_height: comfortable
+        zebra_striping: false  # Conditional formatting is more important
+
+      accessibility:
+        alt_text: "Performance table with colour-coded indicators showing accounts sorted by quota attainment"

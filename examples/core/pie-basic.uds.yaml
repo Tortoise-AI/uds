@@ -1,0 +1,125 @@
+# =============================================================================
+# UDS Example: Basic Pie/Donut Chart
+# =============================================================================
+# Purpose: Pie chart showing metric distribution by dimension
+# Demonstrates: Pie type, donut style, top N with grouping, percentage labels
+# Spec sections: 14.6
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue by Channel"
+  intent: "Visualise revenue distribution across sales channels to understand channel mix"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: channel_distribution
+      type: pie
+      title: "Revenue by Sales Channel"
+      description: "Distribution of revenue across sales channels for current quarter"
+
+      position:
+        row: 0
+        column: 0
+        width: 6
+        height: 5
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.sales_channel"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Style configuration
+        style: donut  # Options: pie, donut
+        donut_ratio: 0.6  # Inner radius ratio (0.5-0.8)
+
+        # Data limiting
+        limit: 5
+        group_remaining: true
+        group_label: "Other"
+
+        # Sorting
+        sort_by: value
+        sort_order: desc
+
+        # Colour scheme
+        colour_scheme: categorical
+
+        # Centre label (for donut)
+        centre_label:
+          show: true
+          primary:
+            value: "total"  # Options: total, label, custom
+            format:
+              style: currency
+              currency: USD
+              notation: compact
+          secondary:
+            value: "Total Revenue"
+
+        # Slice labels
+        labels:
+          show: true
+          type: percentage  # Options: value, percentage, both
+          position: outside  # Options: inside, outside, none
+          format:
+            style: percent
+            precision: 1
+
+        # Legend
+        legend:
+          show: true
+          position: right
+          layout: vertical
+          show_values: true
+          value_format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Slice behaviour
+        start_angle: 0
+        sort_slices: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          show_percentage: true
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+
+      interactions:
+        - trigger: slice_click
+          action: filter_dashboard
+          target: "sales.sales_channel"
+
+      accessibility:
+        alt_text: "Donut chart showing revenue distribution across 5 sales channels, with Direct Sales at 42%, Online at 28%"

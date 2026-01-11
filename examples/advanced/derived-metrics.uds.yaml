@@ -1,0 +1,238 @@
+# =============================================================================
+# UDS Example: Derived Metrics Showcase
+# =============================================================================
+# Purpose: Comprehensive examples of derived metric types
+# Demonstrates: Arithmetic, conditional, window, case expressions
+# Spec sections: 11
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Advanced Metrics Dashboard"
+  intent: "Showcase advanced derived metric calculations for complex business logic"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  # Derived metrics with various expression types
+  derived_metrics:
+    # Arithmetic expression
+    - id: average_order_value
+      name: "Average Order Value"
+      description: "Total revenue divided by number of orders"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "sales.total_revenue"
+          - metric: "sales.total_orders"
+      format:
+        style: currency
+        currency: USD
+        precision: 2
+
+    # Conditional expression
+    - id: large_deal_revenue
+      name: "Large Deal Revenue"
+      description: "Revenue from deals over $50K"
+      expression:
+        type: conditional
+        condition:
+          dimension: "sales.deal_size"
+          operator: greater_than
+          value: 50000
+        then:
+          metric: "sales.total_revenue"
+        else:
+          value: 0
+      format:
+        style: currency
+        currency: USD
+        notation: compact
+
+    # Window function - moving average
+    - id: revenue_3month_avg
+      name: "3-Month Revenue Average"
+      description: "Rolling 3-month average of revenue"
+      expression:
+        type: window
+        function: average
+        metric: "sales.total_revenue"
+        window:
+          type: moving
+          size: 3
+          unit: month
+      format:
+        style: currency
+        currency: USD
+        notation: compact
+
+    # Case expression - performance tier
+    - id: performance_tier
+      name: "Performance Tier"
+      description: "Categorise accounts by revenue performance"
+      expression:
+        type: case
+        cases:
+          - when:
+              metric: "sales.total_revenue"
+              operator: greater_than_or_equal
+              value: 1000000
+            then: "Enterprise"
+          - when:
+              metric: "sales.total_revenue"
+              operator: greater_than_or_equal
+              value: 100000
+            then: "Mid-Market"
+          - when:
+              metric: "sales.total_revenue"
+              operator: greater_than_or_equal
+              value: 10000
+            then: "Small Business"
+        else: "Starter"
+
+    # Complex arithmetic - growth rate
+    - id: quarter_over_quarter_growth
+      name: "QoQ Growth Rate"
+      description: "Quarter-over-quarter revenue growth rate"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - expression:
+              type: arithmetic
+              operator: subtract
+              operands:
+                - metric: "sales.total_revenue"
+                  time_offset: "current"
+                - metric: "sales.total_revenue"
+                  time_offset: "-1 quarter"
+          - metric: "sales.total_revenue"
+            time_offset: "-1 quarter"
+      format:
+        style: percent
+        precision: 1
+
+    # Ratio metric
+    - id: customer_acquisition_cost
+      name: "Customer Acquisition Cost"
+      description: "Marketing spend per new customer"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "sales.marketing_spend"
+          - metric: "sales.new_customers_count"
+      format:
+        style: currency
+        currency: USD
+        precision: 0
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 70
+
+  panels:
+    # Arithmetic derived metric
+    - id: aov_kpi
+      type: kpi
+      title: "Avg Order Value"
+      position: { row: 0, column: 0, width: 3, height: 2 }
+      data:
+        derived_metric: average_order_value
+        time_range: { type: relative, value: "this_month" }
+
+    # Conditional derived metric
+    - id: large_deals_kpi
+      type: kpi
+      title: "Large Deal Revenue"
+      position: { row: 0, column: 3, width: 3, height: 2 }
+      data:
+        derived_metric: large_deal_revenue
+        time_range: { type: relative, value: "this_quarter" }
+
+    # Growth rate derived metric
+    - id: growth_kpi
+      type: kpi
+      title: "QoQ Growth"
+      position: { row: 0, column: 6, width: 3, height: 2 }
+      data:
+        derived_metric: quarter_over_quarter_growth
+        time_range: { type: relative, value: "this_quarter" }
+
+    # CAC derived metric
+    - id: cac_kpi
+      type: kpi
+      title: "Customer Acq Cost"
+      position: { row: 0, column: 9, width: 3, height: 2 }
+      data:
+        derived_metric: customer_acquisition_cost
+        time_range: { type: relative, value: "this_quarter" }
+
+    # Moving average trend
+    - id: revenue_trend_with_avg
+      type: trend
+      title: "Revenue with 3-Month Moving Average"
+      position: { row: 2, column: 0, width: 12, height: 5 }
+      data:
+        metrics:
+          - source: sales
+            ref: "sales.total_revenue"
+          - derived_metric: revenue_3month_avg
+        time_range: { type: relative, value: "last_24_months" }
+        time_grain: month
+      options:
+        style: line
+        series:
+          - metric: "sales.total_revenue"
+            style: line
+          - metric: revenue_3month_avg
+            style: line
+            dash: [5, 5]
+
+    # Performance tier distribution
+    - id: tier_distribution
+      type: bar
+      title: "Revenue by Performance Tier"
+      position: { row: 7, column: 0, width: 8, height: 5 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ derived_metric: performance_tier }]
+        time_range: { type: relative, value: "this_year" }
+      options:
+        orientation: vertical
+        sort_order: desc
+
+    # Tier summary table
+    - id: tier_summary
+      type: table
+      title: "Account Summary by Tier"
+      position: { row: 7, column: 8, width: 4, height: 5 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.account_count"
+          - ref: "sales.total_revenue"
+          - derived_metric: average_order_value
+        dimensions: [{ derived_metric: performance_tier }]
+        time_range: { type: relative, value: "this_year" }
+      options:
+        sorting: { initial: { field: "sales.total_revenue", order: desc } }
+
+  accessibility:
+    alt_text: "Dashboard showcasing derived metrics including averages, growth rates, conditional aggregations, and performance tiers"

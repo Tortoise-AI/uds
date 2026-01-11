@@ -1,0 +1,93 @@
+# =============================================================================
+# UDS Example: AI Generation Request
+# =============================================================================
+# Purpose: Dashboard with AI generation configuration for full generation
+# Demonstrates: Generation mode, constraints, preferences, prompt
+# Spec sections: 23
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Performance Dashboard"
+  intent: "Track monthly sales performance with regional breakdown and top products"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  # Placeholder layout - will be generated
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  # Placeholder panels - will be generated
+  panels: []
+
+  # AI Generation configuration
+  generation:
+    mode: full  # Options: full, assisted, human
+
+    # Natural language prompt
+    prompt: |
+      Create a sales performance dashboard for managers that shows:
+      1. Key metrics: total revenue, total orders, average order value, conversion rate
+      2. Revenue trend over the last 12 months
+      3. Top 10 products by revenue with horizontal bar chart
+      4. Regional breakdown as a pie chart
+      5. Performance table showing sales by account manager
+
+      The dashboard should be easy to scan quickly and highlight performance against targets.
+
+    # Constraints
+    constraints:
+      max_panels: 10
+      required_metrics:
+        - "sales.total_revenue"
+        - "sales.total_orders"
+      allowed_panel_types:
+        - kpi
+        - trend
+        - bar
+        - pie
+        - table
+      forbidden_panel_types:
+        - scatter
+        - heatmap
+      max_query_complexity: medium
+      require_targets: true
+
+    # Preferences
+    preferences:
+      layout_style: grid  # Options: grid, sections, tabs
+      colour_scheme: corporate
+      comparison_period: previous_period
+      default_time_range: "this_month"
+      kpi_placement: top
+      chart_placement: middle
+      table_placement: bottom
+
+    # Elements to exclude
+    excluded_elements:
+      - filters  # Don't generate global filters
+      - variables  # Don't generate variables
+
+    # Generation metadata
+    model: "claude-3-5-sonnet-20241022"
+    timestamp: "2026-01-11T10:30:00Z"
+    confidence_threshold: 0.7  # Only include panels with >70% confidence
+
+  accessibility:
+    alt_text: "AI-generated sales performance dashboard based on natural language requirements"

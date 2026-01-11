@@ -1,0 +1,142 @@
+# =============================================================================
+# UDS Example: Team OKRs with Grouping
+# =============================================================================
+# Purpose: Team-level OKRs grouped by team/department
+# Demonstrates: OKR type with grouping, drill-down to individual KRs
+# Spec sections: 14.16
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Engineering Team OKRs"
+  intent: "Track team-level objectives grouped by engineering department for coordinated execution"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: full
+
+  semantic_sources:
+    - id: goals
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: team_okrs
+      type: okr
+      title: "Engineering OKRs by Team"
+      description: "Team objectives grouped by engineering department"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 10
+
+      data:
+        source: goals
+        metrics:
+          - ref: "goals.progress"
+          - ref: "goals.confidence_score"
+          - ref: "goals.weight"
+        dimensions:
+          - ref: "goals.objective_id"
+          - ref: "goals.objective_title"
+          - ref: "goals.kr_id"
+          - ref: "goals.kr_title"
+          - ref: "goals.kr_objective_id"
+          - ref: "goals.owner_name"
+          - ref: "goals.team_name"
+          - ref: "goals.quarter"
+        filters:
+          - dimension: "goals.quarter"
+            operator: eq
+            value: "2026-Q1"
+          - dimension: "goals.department"
+            operator: eq
+            value: "Engineering"
+
+      options:
+        # Bindings
+        bindings:
+          objective_id: "goals.objective_id"
+          objective_title: "goals.objective_title"
+          key_result_id: "goals.kr_id"
+          key_result_title: "goals.kr_title"
+          key_result_objective_id: "goals.kr_objective_id"
+          progress: "goals.progress"
+          confidence: "goals.confidence_score"
+          owner: "goals.owner_name"
+          weight: "goals.weight"
+
+        # Structure
+        structure:
+          max_levels: 2
+          allow_nested_objectives: false
+          key_results_required: false  # Some teams may have aspirational objectives
+
+        # Display with grouping
+        display:
+          layout: nested
+          show_objective_progress: true
+          show_key_result_progress: true
+          show_confidence: true
+          show_owner: true
+          show_period: false
+          show_values: false  # More qualitative for team-level
+          progress_style: bar
+          expandable: true
+          default_expanded: 2  # Show all by default
+
+        # Scoring
+        scoring:
+          method: weighted
+          scale: "0-1"
+          include_confidence: true
+
+        # Status thresholds
+        status_thresholds:
+          - max: 0.4
+            status: negative
+            label: "Needs Attention"
+          - max: 0.7
+            status: warning
+            label: "Making Progress"
+          - max: 0.9
+            status: neutral
+            label: "On Track"
+          - min: 0.9
+            status: positive
+            label: "Ahead"
+
+        # Grouping by team
+        grouping:
+          enabled: true
+          dimension: "goals.team_name"
+          show_group_progress: true  # Show aggregate progress per team
+
+        # Period selector
+        period:
+          current: "2026-Q1"
+          show_selector: true
+          available: ["2025-Q4", "2026-Q1", "2026-Q2"]
+          format: "Q[Q] YYYY"
+
+      interactions:
+        - trigger: key_result_click
+          action: drill_through
+          target: "key-result-detail"
+
+      accessibility:
+        alt_text: "Team OKRs grouped by engineering department showing objectives and key results with progress and confidence"

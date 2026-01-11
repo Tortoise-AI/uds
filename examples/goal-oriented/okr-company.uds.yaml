@@ -1,0 +1,150 @@
+# =============================================================================
+# UDS Example: Company-Level OKRs
+# =============================================================================
+# Purpose: Full OKR panel with objectives, key results, and weighted scoring
+# Demonstrates: OKR type, hybrid data binding, weighted scoring, confidence
+# Spec sections: 10.7, 14.16
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Q1 2026 Company OKRs"
+  intent: "Track strategic objectives and measure progress on key results for company-wide alignment"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: goals
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: company_okrs
+      type: okr
+      title: "Q1 2026 Company OKRs"
+      description: "Strategic objectives and key results for Q1"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 8
+
+      # Standard data block - defines what to query
+      data:
+        source: goals
+        metrics:
+          - ref: "goals.progress"            # Progress (0-1)
+          - ref: "goals.target_value"        # Target numeric value
+          - ref: "goals.current_value"       # Current numeric value
+          - ref: "goals.confidence_score"    # Confidence (0-1)
+          - ref: "goals.weight"              # Weight for scoring
+        dimensions:
+          - ref: "goals.objective_id"        # Objective identifier
+          - ref: "goals.objective_title"     # Objective text
+          - ref: "goals.kr_id"               # Key result identifier
+          - ref: "goals.kr_title"            # Key result text
+          - ref: "goals.kr_objective_id"     # Parent linkage
+          - ref: "goals.owner_name"          # Owner
+          - ref: "goals.quarter"             # Period
+        filters:
+          - dimension: "goals.quarter"
+            operator: eq
+            value: "2026-Q1"
+          - dimension: "goals.level"
+            operator: eq
+            value: "company"
+
+      # OKR-specific options with bindings
+      options:
+        # Hybrid bindings - map semantic refs to OKR roles
+        bindings:
+          objective_id: "goals.objective_id"
+          objective_title: "goals.objective_title"
+          key_result_id: "goals.kr_id"
+          key_result_title: "goals.kr_title"
+          key_result_objective_id: "goals.kr_objective_id"
+          progress: "goals.progress"
+          target_value: "goals.target_value"
+          current_value: "goals.current_value"
+          confidence: "goals.confidence_score"
+          owner: "goals.owner_name"
+          period: "goals.quarter"
+          weight: "goals.weight"
+
+        # Structure configuration
+        structure:
+          max_levels: 2
+          allow_nested_objectives: false
+          key_results_required: true
+
+        # Display options
+        display:
+          layout: nested  # Options: nested, flat, tree, cards
+          show_objective_progress: true
+          show_key_result_progress: true
+          show_confidence: true
+          show_owner: true
+          show_period: false  # Already filtered to Q1
+          show_values: true
+          progress_style: bar  # Options: bar, ring, percent
+          expandable: true
+          default_expanded: 1
+          empty_state: "No OKRs defined for this period"
+
+        # Scoring configuration
+        scoring:
+          method: weighted  # Options: average, weighted, min, custom
+          scale: "0-1"      # Options: 0-1, 0-100, 0-10
+          include_confidence: true
+
+        # Status thresholds based on progress
+        status_thresholds:
+          - max: 0.3
+            status: negative
+            label: "Off Track"
+          - max: 0.7
+            status: warning
+            label: "At Risk"
+          - max: 0.9
+            status: neutral
+            label: "On Track"
+          - min: 0.9
+            status: positive
+            label: "Exceeding"
+
+        # Period selector (even though filtered, useful for future)
+        period:
+          current: "2026-Q1"
+          show_selector: true
+          available: ["2025-Q4", "2026-Q1", "2026-Q2"]
+          format: "Q[Q] YYYY"
+
+        # No grouping for company-level
+        grouping:
+          enabled: false
+
+      # Interactivity
+      interactions:
+        - trigger: objective_click
+          action: drill_through
+          target: "objective-detail"
+          context:
+            preserve_filters: true
+
+      accessibility:
+        alt_text: "OKR panel showing company objectives with nested key results, progress bars, and confidence scores for Q1 2026"

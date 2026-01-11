@@ -1,0 +1,93 @@
+# =============================================================================
+# UDS Example: Basic Funnel Chart
+# =============================================================================
+# Purpose: Conversion funnel showing sequential stages
+# Demonstrates: Funnel type, stage progression, conversion rates
+# Spec sections: 14.9
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Funnel"
+  intent: "Track conversion rates through the sales pipeline to identify drop-off points"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: sales_funnel
+      type: funnel
+      title: "Sales Pipeline Conversion"
+      description: "Conversion funnel from lead to closed deal"
+
+      position:
+        row: 0
+        column: 0
+        width: 8
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.leads_count"
+          - ref: "sales.qualified_count"
+          - ref: "sales.proposals_count"
+          - ref: "sales.negotiations_count"
+          - ref: "sales.closed_won_count"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Stage configuration
+        stages:
+          - label: "Leads"
+            metric: "sales.leads_count"
+          - label: "Qualified"
+            metric: "sales.qualified_count"
+          - label: "Proposal"
+            metric: "sales.proposals_count"
+          - label: "Negotiation"
+            metric: "sales.negotiations_count"
+          - label: "Closed Won"
+            metric: "sales.closed_won_count"
+
+        # Display options
+        show_conversion_rates: true
+        show_values: true
+        show_percentages: true
+        value_format:
+          style: number
+          precision: 0
+
+        # Funnel styling
+        colour_scheme: sequential
+        orientation: vertical  # Options: vertical, horizontal
+
+        # Labels
+        labels:
+          position: center  # Options: center, outside
+          show_stage_name: true
+          show_metric_value: true
+          show_conversion_rate: true
+
+      accessibility:
+        alt_text: "Funnel chart showing sales pipeline from 1000 leads to 150 closed deals, with 15% overall conversion rate"

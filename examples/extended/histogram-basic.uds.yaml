@@ -1,0 +1,97 @@
+# =============================================================================
+# UDS Example: Basic Histogram
+# =============================================================================
+# Purpose: Distribution histogram showing frequency of metric values
+# Demonstrates: Histogram type, binning, frequency distribution
+# Spec sections: Extended types
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Order Value Distribution"
+  intent: "Analyse distribution of order values to understand customer spending patterns"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: order_value_histogram
+      type: histogram
+      title: "Distribution of Order Values"
+      description: "Frequency distribution of order values to identify typical transaction sizes"
+
+      position:
+        row: 0
+        column: 0
+        width: 10
+        height: 5
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.order_value"
+        time_range:
+          type: relative
+          value: "last_6_months"
+
+      options:
+        # Binning configuration
+        binning:
+          mode: auto  # Options: auto, fixed_count, fixed_width
+          # For fixed_count:
+          # bin_count: 20
+          # For fixed_width:
+          # bin_width: 100
+
+        # Axes
+        x_axis:
+          label: "Order Value"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        y_axis:
+          label: "Frequency"
+          format:
+            style: number
+            precision: 0
+
+        # Bar styling
+        bar_colour: "#2196F3"
+        bar_opacity: 0.8
+        gap: 2
+
+        # Statistics overlay
+        statistics:
+          show_mean: true
+          show_median: true
+          show_std_dev: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          show_bin_range: true
+          show_count: true
+          show_percentage: true
+
+      accessibility:
+        alt_text: "Histogram showing distribution of order values, with peak frequency between $500-$1000"

@@ -1,0 +1,171 @@
+# =============================================================================
+# UDS Example: Empty Data Handling
+# =============================================================================
+# Purpose: Demonstrate handling of empty/no data scenarios
+# Demonstrates: Empty state configuration, placeholder messages, graceful degradation
+# Spec sections: 22
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "New Product Launch Dashboard"
+  intent: "Track new product performance with graceful handling of empty data during launch phase"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 80
+
+  panels:
+    # Panel with custom empty state message
+    - id: revenue_kpi
+      type: kpi
+      title: "Product Revenue"
+      position: { row: 0, column: 0, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        filters:
+          - dimension: "sales.product_id"
+            operator: eq
+            value: "new-product-2026"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "No sales data yet. Product launches on Jan 15."
+          icon: "schedule"
+          show_zero: true  # Show $0 instead of empty
+
+    # Panel that shows helpful message when no data
+    - id: customer_count
+      type: kpi
+      title: "Customers"
+      position: { row: 0, column: 4, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.customer_count" }]
+        filters:
+          - dimension: "sales.product_id"
+            operator: eq
+            value: "new-product-2026"
+        time_range: { type: relative, value: "this_month" }
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "Awaiting first customers"
+          show_zero: true
+
+    # Trend chart with empty state
+    - id: daily_trend
+      type: trend
+      title: "Daily Sales Trend"
+      position: { row: 2, column: 0, width: 12, height: 4 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        filters:
+          - dimension: "sales.product_id"
+            operator: eq
+            value: "new-product-2026"
+        time_range: { type: relative, value: "last_30_days" }
+        time_grain: day
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "No sales data available yet. Trend will appear once sales begin."
+          icon: "show_chart"
+          style: illustration  # Show illustration instead of chart
+
+    # Table with empty state
+    - id: customer_list
+      type: table
+      title: "Customer List"
+      position: { row: 6, column: 0, width: 12, height: 5 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions:
+          - ref: "sales.customer_name"
+          - ref: "sales.first_purchase_date"
+        filters:
+          - dimension: "sales.product_id"
+            operator: eq
+            value: "new-product-2026"
+        time_range: { type: relative, value: "all_time" }
+      options:
+        pagination: { enabled: true, page_size: 20 }
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "No customers yet. Check back after product launch."
+          icon: "people_outline"
+          cta:  # Call to action
+            text: "View Marketing Plan"
+            link: "/marketing/new-product-2026"
+
+    # Bar chart with zero values handling
+    - id: regional_sales
+      type: bar
+      title: "Sales by Region"
+      position: { row: 11, column: 0, width: 8, height: 4 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ ref: "sales.region" }]
+        filters:
+          - dimension: "sales.product_id"
+            operator: eq
+            value: "new-product-2026"
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        show_zero_values: true  # Show all regions even with zero sales
+        zero_value_label: "Not yet launched"
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "Regional data will appear once sales begin in each region"
+
+    # Text panel providing context
+    - id: launch_status
+      type: text
+      title: "Launch Status"
+      position: { row: 11, column: 8, width: 4, height: 4 }
+      options:
+        content: |
+          ## Product Launch Timeline
+
+          **Pre-Launch Phase**
+          - Launch Date: January 15, 2026
+          - Markets: North America, Europe
+          - Target: 100 customers in Q1
+
+          **Current Status**
+          Data will populate as sales occur. Empty metrics indicate pre-launch state.
+
+  # Dashboard-level empty data handling
+  error_handling:
+    on_empty_data:
+      action: show_partial  # Show panels with data, placeholder for empty ones
+      global_message: "This dashboard is in pre-launch phase. Metrics will populate as product sales begin."
+
+  accessibility:
+    alt_text: "Product launch dashboard with graceful empty state handling showing placeholders for metrics awaiting data"

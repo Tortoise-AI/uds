@@ -1,0 +1,177 @@
+# =============================================================================
+# UDS Example: Manager Team Dashboard
+# =============================================================================
+# Purpose: Team performance dashboard optimized for manager persona
+# Demonstrates: Manager persona, team metrics, moderate filtering, drill-down
+# Spec sections: 7
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Team Performance Dashboard"
+  intent: "Monitor team performance against targets and identify coaching opportunities"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+      primary_device: desktop
+      primary_concern: "team_performance"
+      update_frequency: frequent
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 70
+
+  panels:
+    # Team summary KPIs
+    - id: team_revenue
+      type: kpi
+      title: "Team Revenue"
+      position: { row: 0, column: 0, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"  # Dynamic based on logged-in user
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        comparison: { enabled: true, type: previous_period }
+        target: { source: { ref: "sales.team_revenue_target" }, show_progress: true }
+
+    - id: team_quota
+      type: kpi
+      title: "Quota Attainment"
+      position: { row: 0, column: 4, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.quota_attainment" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: percent, precision: 0 }
+        thresholds:
+          mode: absolute
+          values:
+            - { max: 0.8, status: negative }
+            - { max: 0.95, status: warning }
+            - { max: 1.05, status: neutral }
+            - { min: 1.05, status: positive }
+
+    - id: team_size
+      type: kpi
+      title: "Team Size"
+      position: { row: 0, column: 8, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.active_team_members" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"
+
+    # Individual performance comparison
+    - id: member_performance
+      type: bar
+      title: "Individual Performance vs Target"
+      position: { row: 2, column: 0, width: 12, height: 5 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.revenue_target"
+        dimensions: [{ ref: "sales.team_member_name" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        orientation: horizontal
+        mode: grouped
+        sort_by: value
+        sort_order: desc
+        show_target_line: true
+
+    # Performance trend
+    - id: team_trend
+      type: trend
+      title: "Team Revenue Trend"
+      position: { row: 7, column: 0, width: 8, height: 5 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"
+        time_range: { type: relative, value: "last_6_months" }
+        time_grain: month
+      options:
+        style: area
+        comparison_period: { enabled: true, offset: "1 year" }
+
+    # Activity metrics
+    - id: activity_summary
+      type: table
+      title: "Activity Summary"
+      position: { row: 7, column: 8, width: 4, height: 5 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.calls_made"
+          - ref: "sales.meetings_held"
+          - ref: "sales.proposals_sent"
+        dimensions: [{ ref: "sales.team_member_name" }]
+        filters:
+          - dimension: "sales.team"
+            operator: eq
+            value: "{{ user.team }}"
+        time_range: { type: relative, value: "this_week" }
+      options:
+        sorting: { initial: { field: "sales.calls_made", order: desc } }
+
+  # Moderate filtering for managers
+  filters:
+    - id: time_period
+      type: date_range
+      label: "Time Period"
+      default: "this_month"
+      presets: ["this_week", "this_month", "this_quarter"]
+
+    - id: member_filter
+      dimension: "sales.team_member_name"
+      type: multi_select
+      label: "Team Member"
+      default: "all"
+
+  # Refresh every 5 minutes during business hours
+  refresh:
+    enabled: true
+    interval: 300
+
+  interactions:
+    - trigger: bar_click
+      action: drill_through
+      target: "member-detail-dashboard"
+
+  accessibility:
+    alt_text: "Team performance dashboard showing revenue, quota attainment, individual performance comparison, and activity metrics"

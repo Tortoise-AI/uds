@@ -1,0 +1,118 @@
+# =============================================================================
+# UDS Example: Multi-Tab Layout
+# =============================================================================
+# Purpose: Tabbed layout with multiple views
+# Demonstrates: Tabs layout, icons, badges, different panel arrangements per tab
+# Spec sections: 12
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Multi-Tab Analytics Dashboard"
+  intent: "Comprehensive analytics organized into tabs for Overview, Trends, Details, and Reports"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: tabs
+
+    tabs:
+      - id: overview
+        title: "Overview"
+        icon: "dashboard"
+        default: true
+        layout:
+          type: grid
+          columns: 12
+          row_height: 80
+
+      - id: trends
+        title: "Trends"
+        icon: "show_chart"
+        layout:
+          type: grid
+          columns: 12
+          row_height: 60
+
+      - id: details
+        title: "Details"
+        icon: "table_chart"
+        badge: "New"
+        badge_colour: "#4CAF50"
+        layout:
+          type: grid
+          columns: 12
+          row_height: 60
+
+  panels:
+    # Overview tab - KPIs and summary
+    - id: revenue_kpi
+      type: kpi
+      title: "Revenue"
+      tab: overview
+      position: { row: 0, column: 0, width: 3, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    - id: overview_trend
+      type: trend
+      title: "Revenue Trend"
+      tab: overview
+      position: { row: 2, column: 0, width: 12, height: 4 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "last_12_months" }
+        time_grain: month
+
+    # Trends tab - multiple charts
+    - id: monthly_trend
+      type: trend
+      title: "Monthly Comparison"
+      tab: trends
+      position: { row: 0, column: 0, width: 12, height: 5 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ ref: "sales.region" }]
+        time_range: { type: relative, value: "last_12_months" }
+        time_grain: month
+
+    # Details tab - table
+    - id: details_table
+      type: table
+      title: "Sales Details"
+      tab: details
+      position: { row: 0, column: 0, width: 12, height: 8 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+        dimensions:
+          - ref: "sales.account_name"
+          - ref: "sales.region"
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        pagination: { enabled: true, page_size: 50 }
+
+  accessibility:
+    alt_text: "Tabbed dashboard with Overview, Trends, and Details tabs for comprehensive sales analysis"

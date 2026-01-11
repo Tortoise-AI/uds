@@ -1,0 +1,184 @@
+# =============================================================================
+# UDS Example: Operator Real-Time Dashboard
+# =============================================================================
+# Purpose: Real-time operations dashboard optimized for operator persona
+# Demonstrates: Operator persona, real-time data, action-focused, alerts
+# Spec sections: 7, 20
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Operations Monitor"
+  intent: "Monitor real-time operations status and respond quickly to issues requiring immediate attention"
+
+  persona:
+    type: operator
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+      primary_device: desktop
+      primary_concern: "immediate_issues"
+      update_frequency: realtime
+
+  semantic_sources:
+    - id: operations
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 90
+
+  panels:
+    # Large status indicators
+    - id: system_status
+      type: gauge
+      title: "System Health"
+      position: { row: 0, column: 0, width: 4, height: 3 }
+      data:
+        source: operations
+        metrics: [{ ref: "operations.health_score" }]
+        time_range: { type: relative, value: "now" }
+      options:
+        min: 0
+        max: 100
+        zones:
+          - { min: 0, max: 60, colour: "#F44336", label: "Critical" }
+          - { min: 60, max: 80, colour: "#FFC107", label: "Warning" }
+          - { min: 80, max: 100, colour: "#4CAF50", label: "Healthy" }
+        target: { value: 95 }
+        style: arc
+
+    - id: active_orders
+      type: kpi
+      title: "Orders in Process"
+      position: { row: 0, column: 4, width: 4, height: 3 }
+      data:
+        source: operations
+        metrics: [{ ref: "operations.active_orders_count" }]
+        time_range: { type: relative, value: "now" }
+      options:
+        format: { style: number, precision: 0 }
+        layout: { value_size: xlarge }
+        thresholds:
+          mode: absolute
+          values:
+            - { max: 50, status: positive }
+            - { max: 100, status: neutral }
+            - { max: 150, status: warning }
+            - { min: 150, status: negative, label: "Capacity Alert" }
+
+    - id: errors_count
+      type: kpi
+      title: "Active Errors"
+      position: { row: 0, column: 8, width: 4, height: 3 }
+      data:
+        source: operations
+        metrics: [{ ref: "operations.error_count" }]
+        time_range: { type: relative, value: "last_5_minutes" }
+      options:
+        format: { style: number, precision: 0 }
+        layout: { value_size: xlarge }
+        thresholds:
+          mode: absolute
+          values:
+            - { max: 0, status: positive, label: "No Errors" }
+            - { max: 5, status: warning, label: "Minor Issues" }
+            - { min: 5, status: negative, label: "Critical" }
+
+    # Simple list of issues requiring action
+    - id: active_alerts
+      type: table
+      title: "Active Alerts"
+      position: { row: 3, column: 0, width: 12, height: 6 }
+      data:
+        source: operations
+        metrics:
+          - ref: "operations.alert_severity"
+        dimensions:
+          - ref: "operations.alert_id"
+          - ref: "operations.alert_message"
+          - ref: "operations.alert_time"
+          - ref: "operations.alert_status"
+        filters:
+          - dimension: "operations.alert_status"
+            operator: eq
+            value: "active"
+        time_range: { type: relative, value: "last_hour" }
+      options:
+        columns:
+          - field: "operations.alert_severity"
+            label: "Priority"
+            width: 100
+            conditional_formatting:
+              type: colour_scale
+              scale:
+                - { value: 1, colour: "#F44336" }
+                - { value: 2, colour: "#FFC107" }
+                - { value: 3, colour: "#4CAF50" }
+          - field: "operations.alert_message"
+            label: "Issue"
+            width: 400
+          - field: "operations.alert_time"
+            label: "Time"
+            width: 150
+            format: { style: time, format: "HH:mm:ss" }
+        row_height: comfortable
+        pagination: { enabled: false }  # Show all alerts
+        sorting: { initial: { field: "operations.alert_severity", order: asc } }
+
+    # Simple real-time activity feed
+    - id: recent_activity
+      type: text
+      title: "Recent Activity"
+      position: { row: 9, column: 0, width: 12, height: 3 }
+      data:
+        source: operations
+        metrics: [{ ref: "operations.last_order_time" }]
+        dimensions: [{ ref: "operations.last_order_id" }]
+        time_range: { type: relative, value: "now" }
+      options:
+        content: |
+          **Last Order**: #{{operations.last_order_id}} at {{operations.last_order_time}}
+
+  # Alert configuration
+  alerts:
+    - id: high_error_rate
+      condition:
+        metric: "operations.error_count"
+        operator: greater_than
+        value: 10
+        time_window: "5 minutes"
+      notification:
+        channels: ["dashboard", "email"]
+        message: "Error rate exceeded threshold"
+        severity: critical
+
+    - id: capacity_warning
+      condition:
+        metric: "operations.active_orders_count"
+        operator: greater_than
+        value: 120
+        time_window: "1 minute"
+      notification:
+        channels: ["dashboard"]
+        message: "Approaching capacity limit"
+        severity: warning
+
+  # Real-time refresh
+  refresh:
+    enabled: true
+    interval: 5  # 5 seconds for operators
+
+  # No filters - operators need current view only
+  filters: []
+  variables: []
+
+  accessibility:
+    alt_text: "Real-time operations dashboard showing system health, active orders, error count, and active alerts"

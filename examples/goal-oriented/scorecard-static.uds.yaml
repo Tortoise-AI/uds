@@ -1,0 +1,236 @@
+# =============================================================================
+# UDS Example: Scorecard with Static Perspectives
+# =============================================================================
+# Purpose: Scorecard with hardcoded perspectives (non-binding approach)
+# Demonstrates: Static perspective configuration, alternative to bindings
+# Spec sections: 14.17.4
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Strategic Scorecard (Static)"
+  intent: "Monitor key strategic metrics across predefined balanced scorecard perspectives"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: metrics
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: strategic_scorecard
+      type: scorecard
+      title: "Strategic Performance"
+      description: "Key strategic metrics across balanced scorecard perspectives"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 9
+
+      # Data block - just the metrics we need
+      data:
+        source: metrics
+        metrics:
+          - ref: "metrics.revenue"
+          - ref: "metrics.operating_margin"
+          - ref: "metrics.roa"
+          - ref: "metrics.nps_score"
+          - ref: "metrics.customer_retention"
+          - ref: "metrics.satisfaction_score"
+          - ref: "metrics.cycle_time"
+          - ref: "metrics.quality_score"
+          - ref: "metrics.innovation_rate"
+          - ref: "metrics.employee_engagement"
+          - ref: "metrics.training_hours"
+          - ref: "metrics.skills_coverage"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Static perspectives (alternative to bindings)
+        perspectives:
+          - id: financial
+            name: "Financial"
+            icon: "attach_money"
+            colour: "#1976D2"
+            weight: 0.3
+            metrics:
+              - ref: "metrics.revenue"
+                name: "Revenue"
+                target: 5000000
+                weight: 0.4
+                lower_is_better: false
+                format:
+                  style: currency
+                  currency: USD
+                  notation: compact
+
+              - ref: "metrics.operating_margin"
+                name: "Operating Margin"
+                target: 0.25
+                weight: 0.3
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 1
+
+              - ref: "metrics.roa"
+                name: "Return on Assets"
+                target: 0.15
+                weight: 0.3
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 1
+
+          - id: customer
+            name: "Customer"
+            icon: "people"
+            colour: "#388E3C"
+            weight: 0.3
+            metrics:
+              - ref: "metrics.nps_score"
+                name: "Net Promoter Score"
+                target: 50
+                weight: 0.4
+                lower_is_better: false
+
+              - ref: "metrics.customer_retention"
+                name: "Customer Retention"
+                target: 0.95
+                weight: 0.35
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 1
+
+              - ref: "metrics.satisfaction_score"
+                name: "Satisfaction Score"
+                target: 4.5
+                weight: 0.25
+                lower_is_better: false
+                format:
+                  style: number
+                  precision: 1
+
+          - id: internal
+            name: "Internal Process"
+            icon: "settings"
+            colour: "#F57C00"
+            weight: 0.2
+            metrics:
+              - ref: "metrics.cycle_time"
+                name: "Process Cycle Time"
+                target: 5
+                weight: 0.5
+                lower_is_better: true  # Lower is better for cycle time
+                format:
+                  style: number
+                  precision: 1
+                  suffix: " days"
+
+              - ref: "metrics.quality_score"
+                name: "Quality Score"
+                target: 0.98
+                weight: 0.5
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 2
+
+          - id: learning
+            name: "Learning & Growth"
+            icon: "school"
+            colour: "#7B1FA2"
+            weight: 0.2
+            metrics:
+              - ref: "metrics.innovation_rate"
+                name: "Innovation Rate"
+                target: 0.2
+                weight: 0.3
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 1
+
+              - ref: "metrics.employee_engagement"
+                name: "Employee Engagement"
+                target: 4.0
+                weight: 0.4
+                lower_is_better: false
+                format:
+                  style: number
+                  precision: 1
+
+              - ref: "metrics.training_hours"
+                name: "Training Hours"
+                target: 40
+                weight: 0.15
+                lower_is_better: false
+                format:
+                  style: number
+                  precision: 0
+                  suffix: " hrs"
+
+              - ref: "metrics.skills_coverage"
+                name: "Skills Coverage"
+                target: 0.85
+                weight: 0.15
+                lower_is_better: false
+                format:
+                  style: percent
+                  precision: 0
+
+        # Display options
+        display:
+          layout: quadrant
+          show_overall_score: true
+          show_perspective_scores: true
+          show_metric_details: true
+          show_targets: true
+          show_variance: true
+          show_trend: false  # No trend data in this example
+          compact: false
+
+        # Scoring
+        scoring:
+          method: weighted_average
+          scale: "0-100"
+          normalize: true
+          perspective_aggregation: weighted
+
+        # Status thresholds
+        status_thresholds:
+          - max: 50
+            status: negative
+            label: "Needs Attention"
+          - max: 75
+            status: warning
+            label: "Below Target"
+          - max: 90
+            status: neutral
+            label: "On Target"
+          - min: 90
+            status: positive
+            label: "Exceeding"
+
+      accessibility:
+        alt_text: "Balanced scorecard showing performance across Financial, Customer, Internal Process, and Learning & Growth perspectives"

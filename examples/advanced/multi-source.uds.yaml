@@ -1,0 +1,222 @@
+# =============================================================================
+# UDS Example: Multi-Source Dashboard
+# =============================================================================
+# Purpose: Dashboard combining data from multiple semantic sources
+# Demonstrates: Multiple sources, derived metrics across sources, source capabilities
+# Spec sections: 8, 11
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Unified Business Intelligence"
+  intent: "Combine sales, finance, and HR data to provide holistic business view"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: minimal
+
+  # Multiple semantic sources
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+      capabilities:
+        metrics: true
+        dimensions: true
+        filters: true
+        time_grains: ["day", "week", "month", "quarter", "year"]
+
+    - id: finance
+      type: dbt
+      endpoint: "https://dbt.example.com/semantic-layer/v1"
+      authentication:
+        type: bearer
+        token_env: "DBT_API_TOKEN"
+      capabilities:
+        metrics: true
+        dimensions: true
+        filters: true
+        time_grains: ["month", "quarter", "year"]
+
+    - id: hr
+      type: custom
+      endpoint: "https://hr-api.example.com/v1/metrics"
+      authentication:
+        type: api_key
+        key_env: "HR_API_KEY"
+      capabilities:
+        metrics: true
+        dimensions: true
+        filters: false
+        time_grains: ["month"]
+
+  # Derived metrics combining multiple sources
+  derived_metrics:
+    - id: revenue_per_employee
+      name: "Revenue per Employee"
+      description: "Average revenue generated per employee"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "sales.total_revenue"
+            source: sales
+          - metric: "hr.employee_count"
+            source: hr
+      format:
+        style: currency
+        currency: USD
+        precision: 0
+
+    - id: profit_margin
+      name: "Profit Margin"
+      description: "Net profit as percentage of revenue"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "finance.net_profit"
+            source: finance
+          - metric: "sales.total_revenue"
+            source: sales
+      format:
+        style: percent
+        precision: 1
+
+    - id: employee_cost_ratio
+      name: "Employee Cost Ratio"
+      description: "Employee costs as percentage of revenue"
+      expression:
+        type: arithmetic
+        operator: divide
+        operands:
+          - metric: "hr.total_compensation"
+            source: hr
+          - metric: "sales.total_revenue"
+            source: sales
+      format:
+        style: percent
+        precision: 1
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 80
+
+  panels:
+    # Sales metrics
+    - id: revenue_kpi
+      type: kpi
+      title: "Total Revenue"
+      position: { row: 0, column: 0, width: 3, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    # Finance metrics
+    - id: profit_kpi
+      type: kpi
+      title: "Net Profit"
+      position: { row: 0, column: 3, width: 3, height: 2 }
+      data:
+        source: finance
+        metrics: [{ ref: "finance.net_profit" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    # Derived metric - profit margin
+    - id: margin_kpi
+      type: kpi
+      title: "Profit Margin"
+      position: { row: 0, column: 6, width: 3, height: 2 }
+      data:
+        derived_metric: profit_margin
+        time_range: { type: relative, value: "this_quarter" }
+
+    # HR metrics
+    - id: headcount_kpi
+      type: kpi
+      title: "Headcount"
+      position: { row: 0, column: 9, width: 3, height: 2 }
+      data:
+        source: hr
+        metrics: [{ ref: "hr.employee_count" }]
+        time_range: { type: relative, value: "now" }
+      options:
+        format: { style: number, precision: 0 }
+
+    # Derived metric - revenue per employee
+    - id: rev_per_emp
+      type: kpi
+      title: "Revenue per Employee"
+      position: { row: 2, column: 0, width: 4, height: 2 }
+      data:
+        derived_metric: revenue_per_employee
+        time_range: { type: relative, value: "this_quarter" }
+
+    # Derived metric - employee cost ratio
+    - id: cost_ratio
+      type: kpi
+      title: "Employee Cost Ratio"
+      position: { row: 2, column: 4, width: 4, height: 2 }
+      data:
+        derived_metric: employee_cost_ratio
+        time_range: { type: relative, value: "this_quarter" }
+
+    # Multi-source trend combining sales and finance
+    - id: financial_trend
+      type: trend
+      title: "Revenue vs Profit Trend"
+      position: { row: 4, column: 0, width: 12, height: 5 }
+      data:
+        # Note: This would require renderer to combine multiple queries
+        sources:
+          - source: sales
+            metrics: [{ ref: "sales.total_revenue" }]
+          - source: finance
+            metrics: [{ ref: "finance.net_profit" }]
+        time_range: { type: relative, value: "last_12_months" }
+        time_grain: month
+      options:
+        style: line
+        y_axis:
+          format: { style: currency, currency: USD, notation: compact }
+
+    # HR breakdown
+    - id: headcount_by_dept
+      type: bar
+      title: "Headcount by Department"
+      position: { row: 9, column: 0, width: 6, height: 4 }
+      data:
+        source: hr
+        metrics: [{ ref: "hr.employee_count" }]
+        dimensions: [{ ref: "hr.department" }]
+      options:
+        orientation: horizontal
+
+    # Financial breakdown
+    - id: expenses_by_category
+      type: pie
+      title: "Operating Expenses"
+      position: { row: 9, column: 6, width: 6, height: 4 }
+      data:
+        source: finance
+        metrics: [{ ref: "finance.operating_expenses" }]
+        dimensions: [{ ref: "finance.expense_category" }]
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        style: donut
+
+  accessibility:
+    alt_text: "Multi-source dashboard combining sales, finance, and HR data with derived metrics for holistic business view"

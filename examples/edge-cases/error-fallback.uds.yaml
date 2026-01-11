@@ -1,0 +1,131 @@
+# =============================================================================
+# UDS Example: Error Handling and Fallbacks
+# =============================================================================
+# Purpose: Demonstrate error handling configuration
+# Demonstrates: Panel-level errors, fallback content, retry behaviour
+# Spec sections: 22
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Dashboard with Error Handling"
+  intent: "Demonstrate graceful degradation and error handling strategies"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 80
+
+  panels:
+    # Panel with error handling configuration
+    - id: revenue_kpi
+      type: kpi
+      title: "Total Revenue"
+      position: { row: 0, column: 0, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+      # Panel-level error configuration
+      error_handling:
+        on_query_error:
+          action: show_fallback  # Options: show_fallback, show_error, hide_panel
+          retry:
+            enabled: true
+            max_attempts: 3
+            backoff: exponential
+            initial_delay: 1000
+          fallback:
+            type: static_value
+            value: 0
+            message: "Unable to load revenue data. Last known value displayed."
+
+    # Panel that shows error message on failure
+    - id: orders_kpi
+      type: kpi
+      title: "Total Orders"
+      position: { row: 0, column: 4, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_orders" }]
+        time_range: { type: relative, value: "this_month" }
+      error_handling:
+        on_query_error:
+          action: show_error
+          error_codes:
+            timeout: "Query timed out. Try reducing the time range."
+            permission_denied: "You don't have permission to view this data."
+            not_found: "Metric not found. Please contact support."
+            default: "An error occurred loading this panel."
+
+    # Panel that hides on error
+    - id: conversion_kpi
+      type: kpi
+      title: "Conversion Rate"
+      position: { row: 0, column: 8, width: 4, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.conversion_rate" }]
+        time_range: { type: relative, value: "this_month" }
+      error_handling:
+        on_query_error:
+          action: hide_panel
+
+    # Panel with empty data handling
+    - id: new_customers
+      type: trend
+      title: "New Customers"
+      position: { row: 2, column: 0, width: 12, height: 4 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.new_customers_count" }]
+        time_range: { type: relative, value: "last_12_months" }
+        time_grain: month
+      error_handling:
+        on_empty_data:
+          action: show_placeholder
+          message: "No new customer data available for the selected period"
+          icon: "people_outline"
+
+  # Dashboard-level error handling
+  error_handling:
+    on_panel_error:
+      action: show_placeholder
+      allow_partial: true  # Show working panels even if some fail
+
+    on_source_error:
+      action: show_error
+      retry:
+        enabled: true
+        max_attempts: 2
+        initial_delay: 2000
+
+    # Error codes mapping
+    error_codes:
+      UDS-E001: "Invalid semantic reference"
+      UDS-E002: "Source connection failed"
+      UDS-E003: "Query timeout"
+      UDS-E004: "Permission denied"
+      UDS-E005: "Rate limit exceeded"
+
+  accessibility:
+    alt_text: "Dashboard demonstrating error handling with fallback values, error messages, and graceful degradation"

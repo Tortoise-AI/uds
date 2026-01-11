@@ -1,0 +1,118 @@
+# =============================================================================
+# UDS Example: Stacked Bar Chart
+# =============================================================================
+# Purpose: Stacked/grouped bar with two dimensions
+# Demonstrates: Dimensional stacking, percentage mode, subcategory breakdown
+# Spec sections: 14.4
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue by Region and Channel"
+  intent: "Analyse revenue distribution across regions and sales channels to optimise channel strategy"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: regional_channel_revenue
+      type: bar
+      title: "Revenue by Region and Channel"
+      description: "Stacked bar chart showing channel contribution to regional revenue"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.region"        # Primary dimension (bars)
+          - ref: "sales.sales_channel"  # Secondary dimension (stack segments)
+        time_range:
+          type: relative
+          value: "this_year"
+
+      options:
+        # Stacking configuration
+        orientation: vertical
+        mode: stacked  # Options: grouped, stacked, percentage
+
+        # Sorting
+        sort_by: total
+        sort_order: desc
+
+        # Bar styling
+        bar_width: 0.8
+        gap: 0.1
+        colour_scheme: categorical
+        show_values: false  # Too crowded in stacked
+
+        # Toggle between modes
+        allow_mode_toggle: true  # User can switch between grouped/stacked/percentage
+
+        # Axes
+        x_axis:
+          show: true
+          label: "Region"
+          rotation: 0
+
+        y_axis:
+          show: true
+          label: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Legend for channels
+        legend:
+          show: true
+          position: right
+          layout: vertical
+          title: "Sales Channel"
+
+        # Grid
+        grid:
+          show_x: false
+          show_y: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          show_total: true
+          show_percentage: true
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+
+      interactions:
+        - trigger: segment_click
+          action: filter_dashboard
+          target: ["sales.region", "sales.sales_channel"]
+
+      accessibility:
+        alt_text: "Stacked vertical bar chart showing revenue contribution by sales channel for each region"

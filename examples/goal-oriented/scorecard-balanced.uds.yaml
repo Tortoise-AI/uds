@@ -1,0 +1,120 @@
+# =============================================================================
+# UDS Example: Balanced Scorecard (Dynamic)
+# =============================================================================
+# Purpose: Balanced scorecard with dynamic perspectives using bindings
+# Demonstrates: Scorecard type, hybrid bindings, weighted scoring, quadrant layout
+# Spec sections: 14.17
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Strategic Balanced Scorecard"
+  intent: "Monitor strategic performance across four balanced perspectives to drive organisational alignment"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: metrics
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: balanced_scorecard
+      type: scorecard
+      title: "Strategic Scorecard Q1 2026"
+      description: "Balanced scorecard across four strategic perspectives"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 8
+
+      # Data block with all metrics and dimensions
+      data:
+        source: metrics
+        metrics:
+          - ref: "metrics.current_value"
+          - ref: "metrics.target_value"
+          - ref: "metrics.weight"
+          - ref: "metrics.trend_value"
+        dimensions:
+          - ref: "metrics.perspective_id"
+          - ref: "metrics.perspective_name"
+          - ref: "metrics.metric_id"
+          - ref: "metrics.metric_name"
+          - ref: "metrics.metric_perspective_id"
+          - ref: "metrics.unit"
+          - ref: "metrics.lower_is_better"
+        filters:
+          - dimension: "metrics.period"
+            operator: eq
+            value: "2026-Q1"
+          - dimension: "metrics.scorecard_type"
+            operator: eq
+            value: "balanced"
+
+      options:
+        # Hybrid bindings
+        bindings:
+          perspective_id: "metrics.perspective_id"
+          perspective_name: "metrics.perspective_name"
+          metric_id: "metrics.metric_id"
+          metric_name: "metrics.metric_name"
+          metric_perspective_id: "metrics.metric_perspective_id"
+          current_value: "metrics.current_value"
+          target_value: "metrics.target_value"
+          weight: "metrics.weight"
+          lower_is_better: "metrics.lower_is_better"
+          unit: "metrics.unit"
+          trend: "metrics.trend_value"
+
+        # Display configuration
+        display:
+          layout: quadrant  # Four perspectives in 2x2 grid
+          show_overall_score: true
+          show_perspective_scores: true
+          show_metric_details: true
+          show_targets: true
+          show_variance: true
+          show_trend: true
+          compact: false
+
+        # Scoring
+        scoring:
+          method: weighted_average
+          scale: "0-100"
+          normalize: true  # Normalize all metrics to 0-100 scale
+          perspective_aggregation: weighted
+
+        # Status thresholds
+        status_thresholds:
+          - max: 40
+            status: negative
+            label: "Critical"
+          - max: 70
+            status: warning
+            label: "Needs Improvement"
+          - max: 85
+            status: neutral
+            label: "Satisfactory"
+          - min: 85
+            status: positive
+            label: "Excellent"
+
+      accessibility:
+        alt_text: "Balanced scorecard showing performance across Financial, Customer, Internal Process, and Learning & Growth perspectives with overall score of 78/100"

@@ -1,0 +1,133 @@
+# =============================================================================
+# UDS Example: Multi-Series Trend Chart
+# =============================================================================
+# Purpose: Multiple metrics on same chart with dimensional breakdown
+# Demonstrates: Multiple series, dimensional breakdown, legend, comparison overlay
+# Spec sections: 14.3
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue by Region Trend"
+  intent: "Compare revenue performance across regions to identify growth opportunities"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: regional_revenue_trend
+      type: trend
+      title: "Revenue by Region"
+      description: "Monthly revenue breakdown by sales region with prior year comparison"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 5
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.region"
+        time_range:
+          type: relative
+          value: "last_12_months"
+        time_grain: month
+
+      options:
+        # Multi-line chart
+        style: line
+        smoothing: natural
+
+        # Series configuration
+        series:
+          limit: 5  # Top 5 regions
+          sort_by: value
+          sort_order: desc
+          colour_scheme: categorical
+
+        # Comparison period overlay
+        comparison_period:
+          enabled: true
+          offset: "1 year"
+          style: dashed
+          opacity: 0.5
+          label_suffix: " (PY)"
+
+        # Axes
+        x_axis:
+          show: true
+          label: "Month"
+          format: "MMM"
+          rotation: 0
+
+        y_axis:
+          show: true
+          label: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+          min: 0
+          max: auto
+
+        # Legend configuration
+        legend:
+          show: true
+          position: bottom
+          layout: horizontal
+          interactive: true  # Click to toggle series
+
+        # Grid
+        grid:
+          show_x: false
+          show_y: true
+          style: solid
+          colour: "#e0e0e0"
+
+        # Markers
+        markers:
+          show: false  # Too many points
+          show_on_hover: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          shared: true  # Show all series at point
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+          sort_by: value
+
+      # Interactive features
+      interactions:
+        - trigger: legend_click
+          action: toggle_series
+        - trigger: click
+          action: filter_dashboard
+          target: "sales.region"
+
+      accessibility:
+        alt_text: "Multi-series line chart showing revenue trends for top 5 regions over 12 months with prior year comparison"

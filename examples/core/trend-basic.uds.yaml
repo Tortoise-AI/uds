@@ -1,0 +1,100 @@
+# =============================================================================
+# UDS Example: Basic Trend Chart
+# =============================================================================
+# Purpose: Simple line chart showing single metric over time
+# Demonstrates: Trend type, time series, auto time range
+# Spec sections: 14.3
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue Trend"
+  intent: "Visualise revenue trend over time to identify patterns and seasonal effects"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: revenue_trend
+      type: trend
+      title: "Monthly Revenue Trend"
+      description: "Total revenue by month for the past 12 months"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 4
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        time_range:
+          type: relative
+          value: "last_12_months"
+        time_grain: month
+
+      options:
+        # Chart style
+        style: area
+        smoothing: none
+
+        # Axis configuration
+        x_axis:
+          show: true
+          label: "Month"
+          format: "MMM yyyy"
+
+        y_axis:
+          show: true
+          label: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+          min: 0
+          max: auto
+
+        # Legend (not needed for single series)
+        legend:
+          show: false
+
+        # Grid lines
+        grid:
+          show_x: false
+          show_y: true
+
+        # Markers
+        markers:
+          show: true
+          size: 4
+
+        # Tooltip
+        tooltip:
+          show: true
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+
+      accessibility:
+        alt_text: "Line chart showing monthly revenue trend over past 12 months, ranging from $800K to $1.2M"

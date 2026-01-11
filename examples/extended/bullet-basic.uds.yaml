@@ -1,0 +1,99 @@
+# =============================================================================
+# UDS Example: Basic Bullet Chart
+# =============================================================================
+# Purpose: Bullet chart showing current value against target and ranges
+# Demonstrates: Bullet type, qualitative ranges, target marker, current value bar
+# Spec sections: Extended types
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Performance Bullet"
+  intent: "Compare actual sales performance against target with qualitative ranges"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: quota_bullet
+      type: bullet
+      title: "Quota Attainment"
+      description: "Current sales against quota with performance ranges"
+
+      position:
+        row: 0
+        column: 0
+        width: 8
+        height: 2
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.actual_revenue"
+          - ref: "sales.revenue_target"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Current value (main bar)
+        value_metric: "sales.actual_revenue"
+        value_colour: "#333"
+
+        # Target marker
+        target_metric: "sales.revenue_target"
+        target_colour: "#F44336"
+        target_width: 3
+
+        # Qualitative ranges (background bands)
+        ranges:
+          - max: 0.6
+            label: "Poor"
+            colour: "#FFEBEE"
+          - max: 0.8
+            label: "Satisfactory"
+            colour: "#FFF3E0"
+          - max: 1.0
+            label: "Good"
+            colour: "#E8F5E9"
+          - max: 1.2
+            label: "Excellent"
+            colour: "#C8E6C9"
+
+        # Orientation
+        orientation: horizontal
+
+        # Scale
+        scale:
+          min: 0
+          max: auto  # Or explicit value
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Labels
+        show_value: true
+        show_target: true
+        show_ranges: true
+
+      accessibility:
+        alt_text: "Bullet chart showing actual revenue of $4.2M against target of $5M, in the 'Good' performance range"

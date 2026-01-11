@@ -1,0 +1,115 @@
+# =============================================================================
+# UDS Example: KPI with Comparison and Sparkline
+# =============================================================================
+# Purpose: Full-featured KPI with period-over-period comparison and trend
+# Demonstrates: Comparison, sparkline, status thresholds, target
+# Spec sections: 14.2
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue KPI with Comparison"
+  intent: "Monitor revenue performance against prior period and target with visual trend"
+
+  persona:
+    type: executive
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 80
+
+  panels:
+    - id: revenue_kpi_full
+      type: kpi
+      title: "Q4 Revenue"
+      description: "Current quarter revenue with comparison to Q3 and annual target"
+
+      position:
+        row: 0
+        column: 0
+        width: 6
+        height: 3
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Value formatting
+        format:
+          style: currency
+          currency: USD
+          precision: 0
+          notation: compact
+
+        # Period-over-period comparison
+        comparison:
+          enabled: true
+          type: previous_period
+          show_absolute: true
+          show_percent: true
+          invert_colours: false  # False for revenue (higher is better)
+          format:
+            style: percent
+            precision: 1
+            sign_display: always
+
+        # 12-period sparkline
+        sparkline:
+          enabled: true
+          type: area
+          height: 60
+          periods: 12
+          show_min_max: false
+          show_current: true
+
+        # Target configuration
+        target:
+          value: 5000000
+          label: "Annual Target"
+          show_progress: true
+          progress_style: bar
+
+        # Status thresholds based on target
+        thresholds:
+          mode: percent_of_target
+          values:
+            - max: 0.8
+              status: negative
+              label: "Critical"
+            - max: 0.95
+              status: warning
+              label: "Below Target"
+            - max: 1.05
+              status: neutral
+              label: "On Track"
+            - min: 1.05
+              status: positive
+              label: "Exceeding"
+
+        # Layout preferences
+        layout:
+          value_size: xlarge
+          label_position: top
+          comparison_position: right
+
+      accessibility:
+        alt_text: "Q4 revenue is $4.2 million, up 12% from Q3, currently at 84% of annual target"

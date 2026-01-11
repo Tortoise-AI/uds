@@ -1,0 +1,121 @@
+# =============================================================================
+# UDS Example: Basic Scatter Plot
+# =============================================================================
+# Purpose: Scatter plot with two metrics and dimensional colouring
+# Demonstrates: Scatter type, X/Y axes, size encoding, quadrants
+# Spec sections: 14.7
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Customer Value Analysis"
+  intent: "Identify high-value customer segments based on revenue and frequency"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: customer_scatter
+      type: scatter
+      title: "Customer Revenue vs Order Frequency"
+      description: "Scatter plot showing customer segments by revenue and purchase frequency"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"          # X-axis
+          - ref: "sales.total_orders"           # Y-axis
+          - ref: "sales.average_order_value"    # Size (optional)
+        dimensions:
+          - ref: "sales.customer_segment"        # Colour by segment
+        time_range:
+          type: relative
+          value: "this_year"
+
+      options:
+        # Axis mappings
+        x_axis:
+          metric: "sales.total_revenue"
+          label: "Total Revenue"
+          scale: linear  # Options: linear, log
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        y_axis:
+          metric: "sales.total_orders"
+          label: "Number of Orders"
+          scale: linear
+          format:
+            style: number
+            precision: 0
+
+        # Point styling
+        points:
+          size_metric: "sales.average_order_value"  # Optional third metric
+          size_range: [4, 20]  # Min/max point size
+          colour_dimension: "sales.customer_segment"
+          colour_scheme: categorical
+          opacity: 0.7
+          show_labels: false  # Too crowded
+
+        # Quadrant lines (reference lines)
+        reference_lines:
+          - axis: x
+            value: 50000  # Median revenue
+            label: "Median Revenue"
+            style: dashed
+            colour: "#666"
+          - axis: y
+            value: 10  # Median orders
+            label: "Median Orders"
+            style: dashed
+            colour: "#666"
+
+        # Legend
+        legend:
+          show: true
+          position: right
+          title: "Customer Segment"
+
+        # Tooltip
+        tooltip:
+          show: true
+          fields:
+            - "sales.customer_segment"
+            - "sales.total_revenue"
+            - "sales.total_orders"
+            - "sales.average_order_value"
+
+      interactions:
+        - trigger: point_click
+          action: drill_through
+          target: "customer-detail"
+
+      accessibility:
+        alt_text: "Scatter plot showing customer distribution by revenue and order count, colour-coded by segment"

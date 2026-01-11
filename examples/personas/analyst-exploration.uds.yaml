@@ -1,0 +1,155 @@
+# =============================================================================
+# UDS Example: Analyst Exploration Dashboard
+# =============================================================================
+# Purpose: Comprehensive analysis dashboard optimized for analyst persona
+# Demonstrates: Analyst persona, full filtering, drill-down, multiple chart types
+# Spec sections: 7
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Analysis Workbench"
+  intent: "Enable deep analysis of sales patterns with full filtering and drill-down capabilities"
+
+  # Analyst persona characteristics
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+      primary_device: desktop
+      primary_concern: "data_quality"
+      update_frequency: frequent
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: tabs
+    tabs:
+      - id: overview
+        title: "Overview"
+        default: true
+        layout: { type: grid, columns: 12, row_height: 60 }
+      - id: trends
+        title: "Trends"
+        layout: { type: grid, columns: 12, row_height: 60 }
+      - id: cohorts
+        title: "Cohort Analysis"
+        layout: { type: grid, columns: 12, row_height: 60 }
+
+  panels:
+    # Overview tab - multiple visualizations
+    - id: revenue_scatter
+      type: scatter
+      title: "Customer Value Matrix"
+      tab: overview
+      position: { row: 0, column: 0, width: 8, height: 6 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+          - ref: "sales.average_order_value"
+        dimensions: [{ ref: "sales.customer_segment" }]
+        time_range: { type: relative, value: "this_year" }
+      options:
+        x_axis: { metric: "sales.total_revenue" }
+        y_axis: { metric: "sales.total_orders" }
+        points: { size_metric: "sales.average_order_value", colour_dimension: "sales.customer_segment" }
+
+    - id: regional_heatmap
+      type: heatmap
+      title: "Regional Performance"
+      tab: overview
+      position: { row: 0, column: 8, width: 4, height: 6 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions:
+          - ref: "sales.region"
+          - ref: "sales.product_category"
+        time_range: { type: relative, value: "this_quarter" }
+      options:
+        rows: { dimension: "sales.region" }
+        columns: { dimension: "sales.product_category" }
+
+    - id: detailed_table
+      type: table
+      title: "Transaction Details"
+      tab: overview
+      position: { row: 6, column: 0, width: 12, height: 5 }
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+          - ref: "sales.average_order_value"
+        dimensions:
+          - ref: "sales.account_name"
+          - ref: "sales.region"
+          - ref: "sales.sales_channel"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        pagination: { enabled: true, page_size: 50 }
+        search: { enabled: true, fields: ["sales.account_name"] }
+
+    # Trends tab
+    - id: cohort_trend
+      type: trend
+      title: "Revenue by Cohort"
+      tab: trends
+      position: { row: 0, column: 0, width: 12, height: 7 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ ref: "sales.customer_cohort" }]
+        time_range: { type: relative, value: "last_24_months" }
+        time_grain: month
+      options:
+        style: line
+        series: { limit: 10 }
+
+  # Full filtering capability for analysts
+  filters:
+    - id: region_filter
+      dimension: "sales.region"
+      type: multi_select
+      label: "Region"
+      default: "all"
+
+    - id: channel_filter
+      dimension: "sales.sales_channel"
+      type: multi_select
+      label: "Sales Channel"
+
+    - id: date_range
+      type: date_range
+      label: "Date Range"
+      default: "this_year"
+
+  # Variables for dynamic analysis
+  variables:
+    - id: metric_selector
+      type: metric
+      label: "Primary Metric"
+      default: "sales.total_revenue"
+      options:
+        - "sales.total_revenue"
+        - "sales.total_orders"
+        - "sales.gross_profit"
+
+  # Auto-refresh for analysts monitoring data
+  refresh:
+    enabled: true
+    interval: 300  # 5 minutes
+
+  accessibility:
+    alt_text: "Comprehensive sales analysis dashboard with scatter plot, heatmap, detailed table, and full filtering for analyst exploration"

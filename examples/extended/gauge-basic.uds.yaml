@@ -1,0 +1,95 @@
+# =============================================================================
+# UDS Example: Basic Gauge Chart
+# =============================================================================
+# Purpose: Gauge showing current value with threshold zones
+# Demonstrates: Gauge type, min/max range, coloured zones, target marker
+# Spec sections: 14.10
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Customer Satisfaction Gauge"
+  intent: "Monitor customer satisfaction score against target ranges"
+
+  persona:
+    type: operator
+    characteristics:
+      attention_span: brief
+      data_literacy: low
+      interaction_preference: minimal
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: nps_gauge
+      type: gauge
+      title: "Net Promoter Score"
+      description: "Current NPS score with target zones"
+
+      position:
+        row: 0
+        column: 0
+        width: 4
+        height: 4
+
+      data:
+        source: sales
+        metrics:
+          - ref: "customers.nps_score"
+        time_range:
+          type: relative
+          value: "this_month"
+
+      options:
+        # Range configuration
+        min: -100
+        max: 100
+
+        # Threshold zones (colour bands)
+        zones:
+          - min: -100
+            max: 0
+            colour: "#F44336"
+            label: "Detractors"
+          - min: 0
+            max: 30
+            colour: "#FFC107"
+            label: "Passive"
+          - min: 30
+            max: 100
+            colour: "#4CAF50"
+            label: "Promoters"
+
+        # Target marker
+        target:
+          value: 50
+          show: true
+          colour: "#2196F3"
+          label: "Target"
+
+        # Gauge styling
+        style: arc  # Options: arc, circle, horseshoe
+        arc_angle: 180  # Degrees (for arc style)
+        needle_colour: "#333"
+
+        # Value display
+        show_value: true
+        value_format:
+          style: number
+          precision: 0
+          sign_display: always
+
+      accessibility:
+        alt_text: "Gauge showing NPS score of 42, in the Promoters zone, approaching target of 50"

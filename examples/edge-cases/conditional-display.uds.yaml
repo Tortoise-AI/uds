@@ -1,0 +1,204 @@
+# =============================================================================
+# UDS Example: Conditional Panel Display
+# =============================================================================
+# Purpose: Panels that show/hide based on conditions
+# Demonstrates: Conditional visibility, device-based display, persona-based visibility
+# Spec sections: 13 (panel-level configuration)
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Adaptive Sales Dashboard"
+  intent: "Dashboard that adapts content based on user context, device, and data conditions"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 70
+
+  panels:
+    # Always visible panel
+    - id: revenue_kpi
+      type: kpi
+      title: "Total Revenue"
+      position: { row: 0, column: 0, width: 3, height: 2 }
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    # Panel visible only when filter is applied
+    - id: filtered_revenue
+      type: kpi
+      title: "Filtered Revenue"
+      position: { row: 0, column: 3, width: 3, height: 2 }
+      visibility:
+        condition:
+          type: filter_applied
+          filter_id: "region_filter"
+        on_hidden:
+          action: collapse  # Collapse space instead of leaving gap
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+
+    # Panel visible only on desktop
+    - id: detailed_table
+      type: table
+      title: "Detailed Breakdown"
+      position: { row: 2, column: 0, width: 12, height: 5 }
+      visibility:
+        device: ["desktop"]  # Hide on tablet and mobile
+        on_hidden:
+          action: hide
+          replacement_message: "View on desktop for detailed breakdown"
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+          - ref: "sales.total_orders"
+          - ref: "sales.average_order_value"
+        dimensions:
+          - ref: "sales.account_name"
+          - ref: "sales.region"
+        time_range: { type: relative, value: "this_month" }
+      options:
+        pagination: { enabled: true, page_size: 50 }
+
+    # Panel visible only when quota attainment is low
+    - id: performance_alert
+      type: text
+      title: "Performance Alert"
+      position: { row: 7, column: 0, width: 12, height: 2 }
+      visibility:
+        condition:
+          type: data_threshold
+          metric: "sales.quota_attainment"
+          operator: less_than
+          value: 0.8
+          time_range: { type: relative, value: "this_month" }
+        on_hidden:
+          action: collapse
+      data:
+        source: sales
+        metrics: [{ ref: "sales.quota_attainment" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        content: |
+          ⚠️ **Performance Alert**: Current quota attainment is below 80%.
+          Review pipeline and consider resource reallocation.
+        style: warning
+
+    # Panel visible only for certain user roles
+    - id: profitability_kpi
+      type: kpi
+      title: "Profit Margin"
+      position: { row: 0, column: 6, width: 3, height: 2 }
+      visibility:
+        user_roles: ["manager", "executive", "finance"]  # Hide from operators
+        on_hidden:
+          action: collapse
+      data:
+        source: sales
+        metrics: [{ ref: "sales.profit_margin" }]
+        time_range: { type: relative, value: "this_month" }
+      options:
+        format: { style: percent, precision: 1 }
+
+    # Panel that shows based on time of day
+    - id: today_performance
+      type: trend
+      title: "Today's Performance"
+      position: { row: 9, column: 0, width: 12, height: 4 }
+      visibility:
+        condition:
+          type: time_of_day
+          hours: [9, 10, 11, 12, 13, 14, 15, 16, 17]  # Business hours only
+          timezone: "America/New_York"
+        on_hidden:
+          action: collapse
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "today" }
+        time_grain: hour
+      options:
+        style: area
+
+    # Panel visible only when specific dimension has values
+    - id: new_market_performance
+      type: bar
+      title: "New Market Performance"
+      position: { row: 13, column: 0, width: 12, height: 4 }
+      visibility:
+        condition:
+          type: dimension_has_values
+          dimension: "sales.new_market_flag"
+          value: true
+        on_hidden:
+          action: collapse
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        dimensions: [{ ref: "sales.region" }]
+        filters:
+          - dimension: "sales.new_market_flag"
+            operator: eq
+            value: true
+        time_range: { type: relative, value: "this_quarter" }
+
+    # Mobile-only simplified view
+    - id: mobile_summary
+      type: kpi
+      title: "Quick Summary"
+      position: { row: 2, column: 0, width: 12, height: 3 }
+      visibility:
+        device: ["mobile"]
+        on_hidden:
+          action: hide
+      data:
+        source: sales
+        metrics: [{ ref: "sales.total_revenue" }]
+        time_range: { type: relative, value: "today" }
+      options:
+        format: { style: currency, currency: USD, notation: compact }
+        layout: { value_size: xlarge }
+
+  # Filters that affect conditional visibility
+  filters:
+    - id: region_filter
+      dimension: "sales.region"
+      type: multi_select
+      label: "Region"
+      default: null  # No filter applied by default
+
+  # Access control affects visibility
+  access:
+    row_level_security:
+      enabled: true
+      dimension: "sales.region"
+      user_attribute: "allowed_regions"
+
+  accessibility:
+    alt_text: "Adaptive dashboard with conditional panel visibility based on filters, device type, user role, and data thresholds"

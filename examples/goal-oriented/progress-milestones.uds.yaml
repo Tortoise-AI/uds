@@ -1,0 +1,132 @@
+# =============================================================================
+# UDS Example: Progress with Milestones
+# =============================================================================
+# Purpose: Progress panel with quarterly milestones and time-ratio status
+# Demonstrates: Progress type with milestones, time-based status calculation
+# Spec sections: 14.15
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Annual Revenue Progress with Milestones"
+  intent: "Track progress toward annual revenue target with quarterly milestones"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: goals
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: annual_revenue_progress
+      type: progress
+      title: "Annual Revenue Target 2026"
+      description: "Progress toward $20M annual target with quarterly milestones"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 4
+
+      data:
+        source: goals
+        metrics:
+          - ref: "goals.annual_revenue"
+          - ref: "goals.annual_target"
+          - ref: "goals.q1_milestone"
+          - ref: "goals.q2_milestone"
+          - ref: "goals.q3_milestone"
+          - ref: "goals.q4_milestone"
+        time_range:
+          type: absolute
+          start: "2026-01-01"
+          end: "2026-12-31"
+
+      options:
+        # Target configuration
+        target:
+          source:
+            ref: "goals.annual_target"
+          label: "2026 Target"
+
+        # Progress display
+        display:
+          style: linear  # Linear timeline style
+          show_percentage: true
+          show_values: true
+          show_remaining: true
+
+        # Milestones
+        milestones:
+          - label: "Q1"
+            date: "2026-03-31"
+            target_value:
+              ref: "goals.q1_milestone"
+            show_achievement: true
+          - label: "Q2"
+            date: "2026-06-30"
+            target_value:
+              ref: "goals.q2_milestone"
+            show_achievement: true
+          - label: "Q3"
+            date: "2026-09-30"
+            target_value:
+              ref: "goals.q3_milestone"
+            show_achievement: true
+          - label: "Q4"
+            date: "2026-12-31"
+            target_value:
+              ref: "goals.q4_milestone"
+            show_achievement: true
+
+        # Time-based status
+        status:
+          mode: time_adjusted
+          show_time_remaining: true
+          show_expected_vs_actual: true
+          thresholds:
+            - max: 0.85
+              status: negative
+              label: "Behind Schedule"
+            - max: 0.95
+              status: warning
+              label: "At Risk"
+            - max: 1.1
+              status: neutral
+              label: "On Track"
+            - min: 1.1
+              status: positive
+              label: "Ahead of Schedule"
+
+        # Formatting
+        format:
+          style: currency
+          currency: USD
+          notation: compact
+          precision: 1
+
+        # Timeline visualization
+        timeline:
+          show: true
+          show_today_marker: true
+          show_periods: true
+          period_type: quarter
+
+      accessibility:
+        alt_text: "Linear progress bar showing annual revenue progress of $12.5M toward $20M target, currently 62.5% complete with Q1 and Q2 milestones achieved"

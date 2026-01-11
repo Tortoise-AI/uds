@@ -1,0 +1,111 @@
+# =============================================================================
+# UDS Example: Basic Treemap
+# =============================================================================
+# Purpose: Hierarchical treemap showing nested dimensions
+# Demonstrates: Treemap type, hierarchical dimensions, size and colour encoding
+# Spec sections: Extended types
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Product Portfolio Treemap"
+  intent: "Visualise product mix by revenue and growth to guide portfolio strategy"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: product_treemap
+      type: treemap
+      title: "Products by Revenue and Growth"
+      description: "Hierarchical view of product categories and items sized by revenue, coloured by growth rate"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 7
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"        # Size
+          - ref: "sales.revenue_growth_rate"  # Colour
+        dimensions:
+          - ref: "sales.product_category"     # Parent level
+          - ref: "sales.product_name"         # Child level
+        time_range:
+          type: relative
+          value: "this_year"
+
+      options:
+        # Hierarchy configuration
+        hierarchy:
+          - dimension: "sales.product_category"
+            label: "Category"
+          - dimension: "sales.product_name"
+            label: "Product"
+
+        # Size metric
+        size_metric: "sales.total_revenue"
+        size_label: "Revenue"
+
+        # Colour metric
+        colour_metric: "sales.revenue_growth_rate"
+        colour_label: "Growth Rate"
+        colour_scale:
+          type: diverging
+          scheme: red_green
+          centre: 0
+          domain: [-0.3, 0.3]
+
+        # Labels
+        labels:
+          show: true
+          min_size: 50  # Minimum tile size to show label
+          show_value: true
+          value_format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Borders
+        borders:
+          parent_colour: "#333"
+          parent_width: 3
+          child_colour: "#fff"
+          child_width: 1
+
+        # Drill-down
+        drill_down:
+          enabled: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          fields:
+            - "sales.product_category"
+            - "sales.product_name"
+            - "sales.total_revenue"
+            - "sales.revenue_growth_rate"
+
+      accessibility:
+        alt_text: "Treemap showing product portfolio organized by category, sized by revenue, coloured by growth rate"

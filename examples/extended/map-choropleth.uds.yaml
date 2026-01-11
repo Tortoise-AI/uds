@@ -1,0 +1,119 @@
+# =============================================================================
+# UDS Example: Choropleth Map
+# =antml:parameter>
+<parameter name="content"># =============================================================================
+# Purpose: Geographic map with region colouring by metric
+# Demonstrates: Map type, choropleth visualization, geographic dimension
+# Spec sections: 14.11
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Revenue by State"
+  intent: "Visualise geographic distribution of revenue to identify regional opportunities"
+
+  persona:
+    type: manager
+    characteristics:
+      attention_span: moderate
+      data_literacy: medium
+      interaction_preference: moderate
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: state_revenue_map
+      type: map
+      title: "Revenue by State"
+      description: "US state-level revenue distribution"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 7
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.state_code"  # ISO 3166-2 codes
+        time_range:
+          type: relative
+          value: "this_year"
+
+      options:
+        # Map configuration
+        map_type: choropleth
+        base_map: us_states
+        projection: albers_usa
+
+        # Geographic binding
+        geographic_dimension: "sales.state_code"
+        dimension_type: iso_code  # Options: iso_code, name, coordinates
+
+        # Colour scale
+        colour_scale:
+          type: sequential
+          scheme: blues
+          domain: auto
+          legend_format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Map styling
+        regions:
+          stroke_colour: "#fff"
+          stroke_width: 1
+          hover_colour: "#333"
+
+        # Zoom and pan
+        zoom:
+          enabled: true
+          initial_zoom: 1
+          min_zoom: 1
+          max_zoom: 8
+
+        pan:
+          enabled: true
+
+        # Tooltip
+        tooltip:
+          show: true
+          fields:
+            - dimension: "sales.state_code"
+              label: "State"
+            - metric: "sales.total_revenue"
+              label: "Revenue"
+              format:
+                style: currency
+                currency: USD
+                precision: 0
+
+        # Legend
+        legend:
+          show: true
+          position: bottom_right
+          title: "Revenue"
+
+      interactions:
+        - trigger: region_click
+          action: filter_dashboard
+          target: "sales.state_code"
+
+      accessibility:
+        alt_text: "Choropleth map of US states coloured by revenue, with California, Texas, and New York showing highest values"

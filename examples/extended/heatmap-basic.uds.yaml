@@ -1,0 +1,111 @@
+# =============================================================================
+# UDS Example: Basic Heatmap
+# =============================================================================
+# Purpose: Heatmap with two dimensions and colour intensity
+# Demonstrates: Heatmap type, two-dimensional layout, diverging scale, cell labels
+# Spec sections: 14.8
+# =============================================================================
+
+uds: "0.1.0"
+
+dashboard:
+  title: "Sales Performance Heatmap"
+  intent: "Identify sales patterns across regions and product categories"
+
+  persona:
+    type: analyst
+    characteristics:
+      attention_span: extended
+      data_literacy: high
+      interaction_preference: full
+
+  semantic_sources:
+    - id: sales
+      type: cube
+      endpoint: "https://cube.example.com/cubejs-api/v1"
+      authentication:
+        type: bearer
+        token_env: "CUBE_API_TOKEN"
+
+  layout:
+    type: grid
+    columns: 12
+    row_height: 60
+
+  panels:
+    - id: regional_category_heatmap
+      type: heatmap
+      title: "Revenue by Region and Category"
+      description: "Heat map showing revenue intensity across regions and product categories"
+
+      position:
+        row: 0
+        column: 0
+        width: 12
+        height: 6
+
+      data:
+        source: sales
+        metrics:
+          - ref: "sales.total_revenue"
+        dimensions:
+          - ref: "sales.region"            # Rows
+          - ref: "sales.product_category"  # Columns
+        time_range:
+          type: relative
+          value: "this_quarter"
+
+      options:
+        # Dimension mapping
+        rows:
+          dimension: "sales.region"
+          label: "Region"
+
+        columns:
+          dimension: "sales.product_category"
+          label: "Product Category"
+
+        # Colour configuration
+        colour_scale:
+          type: sequential  # Options: sequential, diverging
+          scheme: blues
+          domain: auto  # Or [min, max]
+          reverse: false
+
+        # Cell styling
+        cells:
+          show_values: true
+          show_percentage: false
+          value_format:
+            style: currency
+            currency: USD
+            notation: compact
+          border: true
+          border_colour: "#fff"
+          border_width: 1
+
+        # Legend
+        legend:
+          show: true
+          position: bottom
+          title: "Revenue"
+          format:
+            style: currency
+            currency: USD
+            notation: compact
+
+        # Tooltip
+        tooltip:
+          show: true
+          format:
+            style: currency
+            currency: USD
+            precision: 0
+
+      interactions:
+        - trigger: cell_click
+          action: filter_dashboard
+          target: ["sales.region", "sales.product_category"]
+
+      accessibility:
+        alt_text: "Heatmap showing revenue intensity across regions and product categories"
