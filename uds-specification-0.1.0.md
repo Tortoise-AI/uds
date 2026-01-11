@@ -4,7 +4,7 @@
 **Status**: Draft  
 **Last Updated**: January 2026  
 **License**: Apache 2.0  
-**Canonical URL**: https://uds.dev/spec/0.1.0  
+**Canonical URL**: <TODO>  
 **Copyright**: 2026 Tortoise AI Ltd
 
 ---
