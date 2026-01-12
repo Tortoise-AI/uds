@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uds-spec.org/schemas/0.1.0/uds-schema.json",
+  "title": "Universal Dashboard Specification v0.1.0",
+  "description": "JSON Schema for UDS dashboard documents",
+  "type": "object",
+  "required": ["uds", "dashboard"],
+  "properties": {
+    "uds": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "UDS specification version (semver)"
+    },
+    "$schema": {
+      "type": "string",
+      "format": "uri",
+      "description": "JSON Schema URI"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Document metadata"
+    },
+    "dashboard": {
+      "type": "object",
+      "required": ["title", "intent", "persona", "semantic_sources", "layout", "panels"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "persona": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["executive", "manager", "analyst", "operator", "external", "custom"]
+            },
+            "customization_level": {
+              "type": "string",
+              "enum": ["none", "minimal", "moderate", "full"]
+            },
+            "characteristics": {
+              "type": "object"
+            }
+          }
+        },
+        "semantic_sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "endpoint"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["cube", "dbt", "looker", "atscale", "generic", "custom"]
+              },
+              "endpoint": {
+                "type": "string",
+                "format": "uri"
+              },
+              "authentication": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["none", "bearer", "api_key", "oauth2", "custom"]
+                  }
+                }
+              },
+              "auth": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["none", "bearer", "api_key", "oauth2", "custom"]
+                  }
+                }
+              },
+              "capabilities": {
+                "type": "object"
+              },
+              "options": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "time_context": {
+          "type": "object"
+        },
+        "layout": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["grid", "sections", "tabs", "flow"]
+            }
+          }
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "title"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]*$"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "kpi", "trend", "bar", "table", "pie", "text", "progress",
+                  "scatter", "heatmap", "funnel", "gauge", "map", "treemap",
+                  "histogram", "waterfall", "bullet",
+                  "okr", "scorecard", "roadmap"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "position": {
+                "type": "object"
+              },
+              "data": {
+                "type": "object"
+              },
+              "options": {
+                "type": "object",
+                "description": "Type-specific panel options"
+              },
+              "interactions": {
+                "type": "array"
+              },
+              "visibility": {
+                "type": "object"
+              },
+              "error_handling": {
+                "type": "object"
+              },
+              "accessibility": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "derived_metrics": {
+          "type": "array"
+        },
+        "filters": {
+          "type": "array"
+        },
+        "variables": {
+          "type": "array"
+        },
+        "refresh": {
+          "type": "object"
+        },
+        "access": {
+          "type": "object"
+        },
+        "alerts": {
+          "type": "array"
+        },
+        "theme": {
+          "type": "object"
+        },
+        "i18n": {
+          "type": "object"
+        },
+        "embedding": {
+          "type": "object"
+        },
+        "error_handling": {
+          "type": "object"
+        },
+        "lifecycle": {
+          "type": "object"
+        },
+        "generation": {
+          "type": "object"
+        },
+        "interactions": {
+          "type": "array"
+        },
+        "accessibility": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

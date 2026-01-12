@@ -1,7 +1,6 @@
 # =============================================================================
 # UDS Example: Choropleth Map
-# =antml:parameter>
-<parameter name="content"># =============================================================================
+# =============================================================================
 # Purpose: Geographic map with region colouring by metric
 # Demonstrates: Map type, choropleth visualization, geographic dimension
 # Spec sections: 14.11
