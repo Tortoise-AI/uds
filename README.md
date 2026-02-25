@@ -125,6 +125,8 @@ Future ecosystem projects (coming soon):
 - `uds-compiler-grafana`: Grafana JSON compiler
 - `uds-compiler-metabase`: Metabase API compiler
 
+This specification accompanies *From Policy to Practice: An Open Framework for AI-Ready Project Delivery* (Newman, 2026). DOI: https://doi.org/10.5281/zenodo.18711384
+
 ## Use Cases
 
 UDS is designed for:
