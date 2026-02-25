@@ -152,6 +152,15 @@ See [CONTRIBUTORS.md](./CONTRIBUTORS.md) for the list of contributors.
 
 **Note**: A Contributor License Agreement (CLA) will be required for all contributions. Details will be published as the project matures.
 
+## Citation
+
+If you use this specification in your research or work, please cite:
+
+```
+Newman, A. (2026) From Policy to Practice: An Open Framework for AI-Ready Project Delivery.
+London: Tortoise AI. DOI: https://doi.org/10.5281/zenodo.18711384
+```
+
 ## License
 
 Copyright 2026 Tortoise AI Ltd
